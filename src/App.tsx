@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import * as mm from 'music-metadata';
-import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Song {
@@ -39,6 +39,7 @@ export default function App() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   // Apply theme class
   useEffect(() => {
@@ -113,11 +114,18 @@ export default function App() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     
-    const files = Array.from(e.target.files).filter(f => 
-      f.type.startsWith('audio/') || 
-      f.type === 'video/webm' || 
-      f.name.toLowerCase().endsWith('.webm')
-    );
+    const files = Array.from(e.target.files).filter(f => {
+      const name = f.name.toLowerCase();
+      return f.type.startsWith('audio/') || 
+             f.type === 'video/webm' || 
+             name.endsWith('.webm') ||
+             name.endsWith('.mp3') ||
+             name.endsWith('.m4a') ||
+             name.endsWith('.wav') ||
+             name.endsWith('.aac') ||
+             name.endsWith('.ogg') ||
+             name.endsWith('.flac');
+    });
     const parsedSongs: Song[] = [];
 
     for (const file of files) {
@@ -210,21 +218,38 @@ export default function App() {
           <div className="space-y-8">
             <div className="flex justify-between items-end">
               <h1 className="text-4xl font-bold tracking-tight">Library</h1>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="text-rose-500 font-medium flex items-center gap-2 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-              >
-                <FolderOpen size={20} />
-                Add Music
-              </button>
-              {/* @ts-ignore - webkitdirectory is non-standard but widely supported */}
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-rose-500 font-medium flex items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                >
+                  <Plus size={20} />
+                  <span className="hidden sm:inline">Add </span>Files
+                </button>
+                <button 
+                  onClick={() => folderInputRef.current?.click()}
+                  className="hidden sm:flex text-rose-500 font-medium items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                >
+                  <FolderOpen size={20} />
+                  Add Folder
+                </button>
+              </div>
               <input 
                 type="file" 
                 ref={fileInputRef} 
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept="audio/*,video/webm,.webm"
+                accept="audio/*,video/webm,.webm,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+              />
+              {/* @ts-ignore - webkitdirectory is non-standard but widely supported */}
+              <input 
+                type="file" 
+                ref={folderInputRef} 
+                onChange={handleFileSelect} 
+                className="hidden" 
+                multiple 
+                accept="audio/*,video/webm,.webm,.mp3,.wav,.m4a,.aac,.ogg,.flac"
                 webkitdirectory="true"
               />
             </div>
