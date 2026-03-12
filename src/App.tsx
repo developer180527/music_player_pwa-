@@ -211,26 +211,30 @@ export default function App() {
   );
 
   return (
-    <div className="h-full w-full bg-white dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden transition-colors duration-300">
+    <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden transition-colors duration-500">
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-40 px-6 pt-12">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-40 px-6 pt-14">
         {activeTab === 'library' && (
-          <div className="space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
             <div className="flex justify-between items-end">
               <h1 className="text-4xl font-bold tracking-tight">Library</h1>
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-rose-500 font-medium flex items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  className="text-rose-500 font-semibold flex items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors active:scale-95"
                 >
-                  <Plus size={20} />
+                  <Plus size={20} strokeWidth={2.5} />
                   <span className="hidden sm:inline">Add </span>Files
                 </button>
                 <button 
                   onClick={() => folderInputRef.current?.click()}
-                  className="hidden sm:flex text-rose-500 font-medium items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  className="hidden sm:flex text-rose-500 font-semibold items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors active:scale-95"
                 >
-                  <FolderOpen size={20} />
+                  <FolderOpen size={20} strokeWidth={2.5} />
                   Add Folder
                 </button>
               </div>
@@ -256,63 +260,86 @@ export default function App() {
 
             {songs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-zinc-400 dark:text-zinc-500 space-y-4">
-                <Music2 size={48} className="opacity-50" />
-                <p className="text-lg">No music found. Add a folder to start.</p>
+                <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
+                  <Music2 size={32} className="opacity-50" />
+                </div>
+                <p className="text-lg font-medium">No music found.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {songs.map((song, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => setCurrentSongIndex(idx)}
-                    className={`flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-colors ${currentSongIndex === idx ? 'bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-                  >
-                    <div className="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-md">
-                      {song.coverUrl ? (
-                        <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-                          <Music2 size={24} />
-                        </div>
-                      )}
+              <div className="space-y-2">
+                {songs.map((song, idx) => {
+                  const isCurrent = currentSongIndex === idx;
+                  return (
+                    <div 
+                      key={idx} 
+                      onClick={() => setCurrentSongIndex(idx)}
+                      className={`group flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${isCurrent ? 'bg-zinc-100 dark:bg-white/10' : 'hover:bg-zinc-50 dark:hover:bg-white/5'}`}
+                    >
+                      <div className="relative w-14 h-14 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
+                        {song.coverUrl ? (
+                          <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
+                            <Music2 size={24} />
+                          </div>
+                        )}
+                        {isCurrent && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-0.5">
+                            {isPlaying ? (
+                              <>
+                                <div className="w-1 bg-white rounded-full eq-bar" />
+                                <div className="w-1 bg-white rounded-full eq-bar" />
+                                <div className="w-1 bg-white rounded-full eq-bar" />
+                              </>
+                            ) : (
+                              <Pause size={16} className="text-white" fill="currentColor" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 border-b border-zinc-100 dark:border-white/5 pb-3 pt-1 group-last:border-none">
+                        <h3 className={`font-semibold truncate text-[17px] tracking-tight ${isCurrent ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>
+                          {song.title}
+                        </h3>
+                        <p className="text-zinc-500 dark:text-zinc-400 text-[15px] truncate mt-0.5">{song.artist}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-semibold truncate ${currentSongIndex === idx ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>
-                        {song.title}
-                      </h3>
-                      <p className="text-zinc-500 dark:text-zinc-400 text-sm truncate">{song.artist}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {activeTab === 'search' && (
-          <div className="space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
             <h1 className="text-4xl font-bold tracking-tight">Search</h1>
-            <div className="relative">
+            <div className="relative shadow-sm rounded-2xl">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
               <input 
                 type="text" 
                 placeholder="Artists, Songs, or Albums" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all"
+                className="w-full bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-2xl py-4 pl-12 pr-4 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-zinc-400"
               />
             </div>
             
-            <div className="space-y-4 mt-8">
+            <div className="space-y-2 mt-8">
               {filteredSongs.map((song, idx) => {
                 const originalIdx = songs.indexOf(song);
+                const isCurrent = currentSongIndex === originalIdx;
                 return (
                   <div 
                     key={idx} 
                     onClick={() => setCurrentSongIndex(originalIdx)}
-                    className={`flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-colors ${currentSongIndex === originalIdx ? 'bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    className={`group flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${isCurrent ? 'bg-zinc-100 dark:bg-white/10' : 'hover:bg-zinc-50 dark:hover:bg-white/5'}`}
                   >
-                    <div className="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-md">
+                    <div className="relative w-14 h-14 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
                       {song.coverUrl ? (
                         <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
                       ) : (
@@ -320,43 +347,60 @@ export default function App() {
                           <Music2 size={24} />
                         </div>
                       )}
+                      {isCurrent && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-0.5">
+                          {isPlaying ? (
+                            <>
+                              <div className="w-1 bg-white rounded-full eq-bar" />
+                              <div className="w-1 bg-white rounded-full eq-bar" />
+                              <div className="w-1 bg-white rounded-full eq-bar" />
+                            </>
+                          ) : (
+                            <Pause size={16} className="text-white" fill="currentColor" />
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-semibold truncate ${currentSongIndex === originalIdx ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>
+                    <div className="flex-1 min-w-0 border-b border-zinc-100 dark:border-white/5 pb-3 pt-1 group-last:border-none">
+                      <h3 className={`font-semibold truncate text-[17px] tracking-tight ${isCurrent ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>
                         {song.title}
                       </h3>
-                      <p className="text-zinc-500 dark:text-zinc-400 text-sm truncate">{song.artist}</p>
+                      <p className="text-zinc-500 dark:text-zinc-400 text-[15px] truncate mt-0.5">{song.artist}</p>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {activeTab === 'settings' && (
-          <div className="space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
             <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
             
             <div className="space-y-4">
-              <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-2">Appearance</h2>
-              <div className="bg-zinc-100 dark:bg-zinc-900 rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between p-4">
-                  <span className="font-medium">Dark Mode</span>
+              <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Appearance</h2>
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50">
+                <div className="flex items-center justify-between p-4 px-5">
+                  <span className="font-medium text-[17px]">Dark Mode</span>
                   <button 
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className={`w-12 h-7 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-rose-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                    className={`w-[50px] h-[30px] rounded-full transition-colors relative shadow-inner ${theme === 'dark' ? 'bg-rose-500' : 'bg-zinc-200 dark:bg-zinc-700'}`}
                   >
                     <motion.div 
-                      className="w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm"
-                      animate={{ left: theme === 'dark' ? '1.75rem' : '0.25rem' }}
+                      className="w-[26px] h-[26px] bg-white rounded-full absolute top-[2px] shadow-sm border border-black/5"
+                      animate={{ left: theme === 'dark' ? '22px' : '2px' }}
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   </button>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -368,9 +412,9 @@ export default function App() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             onClick={() => setIsNowPlayingOpen(true)}
-            className="fixed bottom-24 left-4 right-4 bg-white/90 dark:bg-zinc-800/95 backdrop-blur-xl rounded-2xl p-2 flex items-center gap-3 shadow-2xl border border-black/5 dark:border-white/5 cursor-pointer z-40 transition-colors"
+            className="fixed bottom-[104px] left-4 right-4 bg-white/70 dark:bg-zinc-800/70 backdrop-blur-3xl backdrop-saturate-150 rounded-2xl p-2 flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-white/40 dark:border-white/10 cursor-pointer z-40 transition-colors active:scale-[0.98]"
           >
-            <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-700 overflow-hidden flex-shrink-0 shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-700 overflow-hidden flex-shrink-0 shadow-sm">
               {currentSong.coverUrl ? (
                 <img src={currentSong.coverUrl} alt="cover" className="w-full h-full object-cover" />
               ) : (
@@ -380,14 +424,20 @@ export default function App() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-sm truncate text-zinc-900 dark:text-white">{currentSong.title}</h4>
-              <p className="text-zinc-500 dark:text-zinc-400 text-xs truncate">{currentSong.artist}</p>
+              <h4 className="font-semibold text-[15px] truncate text-zinc-900 dark:text-white tracking-tight">{currentSong.title}</h4>
+              <p className="text-zinc-500 dark:text-zinc-400 text-[13px] truncate">{currentSong.artist}</p>
             </div>
             <div className="flex items-center gap-4 pr-4">
-              <button onClick={togglePlayPause} className="text-zinc-900 dark:text-white hover:scale-110 transition-transform">
+              <button 
+                onClick={togglePlayPause} 
+                className="text-zinc-900 dark:text-white hover:scale-110 active:scale-90 transition-transform"
+              >
                 {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
               </button>
-              <button onClick={playNext} className="text-zinc-900 dark:text-white hover:scale-110 transition-transform">
+              <button 
+                onClick={playNext} 
+                className="text-zinc-900 dark:text-white hover:scale-110 active:scale-90 transition-transform"
+              >
                 <SkipForward size={24} fill="currentColor" />
               </button>
             </div>
@@ -396,27 +446,27 @@ export default function App() {
       </AnimatePresence>
 
       {/* Floating Bottom Nav */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl rounded-full px-8 py-4 flex gap-10 items-center border border-black/5 dark:border-white/10 shadow-2xl z-30 transition-colors">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl backdrop-saturate-150 rounded-full px-8 py-3.5 flex gap-10 items-center border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] z-30 transition-colors">
         <button 
           onClick={() => setActiveTab('library')}
-          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'library' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
+          className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'library' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
         >
-          <Library size={24} />
-          <span className="text-[10px] font-medium">Library</span>
+          <Library size={24} strokeWidth={activeTab === 'library' ? 2.5 : 2} />
+          <span className="text-[10px] font-semibold tracking-wide">Library</span>
         </button>
         <button 
           onClick={() => setActiveTab('search')}
-          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'search' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
+          className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'search' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
         >
-          <Search size={24} />
-          <span className="text-[10px] font-medium">Search</span>
+          <Search size={24} strokeWidth={activeTab === 'search' ? 2.5 : 2} />
+          <span className="text-[10px] font-semibold tracking-wide">Search</span>
         </button>
         <button 
           onClick={() => setActiveTab('settings')}
-          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'settings' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
+          className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'settings' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
         >
-          <Settings size={24} />
-          <span className="text-[10px] font-medium">Settings</span>
+          <Settings size={24} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
+          <span className="text-[10px] font-semibold tracking-wide">Settings</span>
         </button>
       </div>
 
@@ -427,13 +477,13 @@ export default function App() {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-50 bg-white dark:bg-zinc-900 flex flex-col transition-colors"
+            transition={{ type: 'spring', damping: 28, stiffness: 250 }}
+            className="fixed inset-0 z-50 bg-[#fcfcfc] dark:bg-zinc-900 flex flex-col transition-colors"
           >
             {/* Blurred Background */}
             {currentSong.coverUrl && (
               <div 
-                className="absolute inset-0 opacity-30 dark:opacity-40 blur-3xl scale-110 pointer-events-none"
+                className="absolute inset-0 opacity-40 dark:opacity-50 blur-[80px] scale-125 pointer-events-none saturate-150"
                 style={{
                   backgroundImage: `url(${currentSong.coverUrl})`,
                   backgroundSize: 'cover',
@@ -441,21 +491,21 @@ export default function App() {
                 }}
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white dark:from-black/40 dark:via-black/80 dark:to-black pointer-events-none transition-colors" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/60 to-[#fcfcfc] dark:from-black/10 dark:via-black/60 dark:to-black pointer-events-none transition-colors" />
 
             {/* Content */}
             <div className="relative z-10 flex flex-col h-full px-8 py-12">
               <button 
                 onClick={() => setIsNowPlayingOpen(false)}
-                className="self-center p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                className="self-center p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors active:scale-90"
               >
-                <ChevronDown size={32} />
+                <ChevronDown size={32} strokeWidth={2.5} />
               </button>
 
-              <div className="flex-1 flex flex-col justify-center items-center mt-8">
+              <div className="flex-1 flex flex-col justify-center items-center mt-4">
                 <motion.div 
-                  className="w-full max-w-[320px] aspect-square rounded-3xl bg-zinc-200 dark:bg-zinc-800 shadow-2xl overflow-hidden mb-12"
-                  animate={{ scale: isPlaying ? 1 : 0.95 }}
+                  className="w-full max-w-[340px] aspect-square rounded-3xl bg-zinc-200 dark:bg-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden mb-14"
+                  animate={{ scale: isPlaying ? 1 : 0.92 }}
                   transition={{ type: 'spring', damping: 20, stiffness: 100 }}
                 >
                   {currentSong.coverUrl ? (
@@ -468,9 +518,11 @@ export default function App() {
                 </motion.div>
 
                 <div className="w-full max-w-[400px]">
-                  <div className="mb-8">
-                    <h2 className="text-2xl font-bold truncate text-zinc-900 dark:text-white">{currentSong.title}</h2>
-                    <p className="text-lg text-rose-500 dark:text-rose-400 truncate mt-1">{currentSong.artist}</p>
+                  <div className="mb-10 flex justify-between items-center">
+                    <div className="min-w-0 flex-1 pr-4">
+                      <h2 className="text-2xl font-bold truncate text-zinc-900 dark:text-white tracking-tight">{currentSong.title}</h2>
+                      <p className="text-lg text-rose-500 dark:text-rose-400 truncate mt-1 font-medium">{currentSong.artist}</p>
+                    </div>
                   </div>
 
                   {/* Progress Bar */}
@@ -481,27 +533,26 @@ export default function App() {
                       max={duration || 100} 
                       value={progress}
                       onChange={handleSeek}
-                      className="w-full h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-zinc-900 dark:[&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full cursor-pointer"
                     />
-                    <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-mono">
+                    <div className="flex justify-between text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-2 font-mono tracking-wider">
                       <span>{formatTime(progress)}</span>
                       <span>-{formatTime(duration - progress)}</span>
                     </div>
                   </div>
 
                   {/* Controls */}
-                  <div className="flex items-center justify-center gap-12">
-                    <button onClick={playPrev} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors">
-                      <SkipBack size={40} fill="currentColor" />
+                  <div className="flex items-center justify-center gap-10">
+                    <button onClick={playPrev} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
+                      <SkipBack size={44} fill="currentColor" />
                     </button>
                     <button 
                       onClick={togglePlayPause} 
-                      className="w-20 h-20 flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-105 transition-transform shadow-xl"
+                      className="w-20 h-20 flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.2)]"
                     >
                       {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-2" />}
                     </button>
-                    <button onClick={playNext} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors">
-                      <SkipForward size={40} fill="currentColor" />
+                    <button onClick={playNext} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
+                      <SkipForward size={44} fill="currentColor" />
                     </button>
                   </div>
                 </div>
