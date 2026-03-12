@@ -240,7 +240,7 @@ export default function App() {
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept="audio/*,video/webm,.webm,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac,.webm"
               />
               {/* @ts-ignore - webkitdirectory is non-standard but widely supported */}
               <input 
@@ -249,7 +249,7 @@ export default function App() {
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept="audio/*,video/webm,.webm,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac,.webm"
                 webkitdirectory="true"
               />
             </div>
