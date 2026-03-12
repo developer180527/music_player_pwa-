@@ -440,7 +440,7 @@ export default function App() {
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac"
               />
               {/* @ts-ignore - webkitdirectory is non-standard but widely supported */}
               <input 
@@ -449,7 +449,7 @@ export default function App() {
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac"
                 webkitdirectory="true"
               />
             </div>
