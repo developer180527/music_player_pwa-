@@ -113,7 +113,11 @@ export default function App() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     
-    const files = Array.from(e.target.files).filter(f => f.type.startsWith('audio/'));
+    const files = Array.from(e.target.files).filter(f => 
+      f.type.startsWith('audio/') || 
+      f.type === 'video/webm' || 
+      f.name.toLowerCase().endsWith('.webm')
+    );
     const parsedSongs: Song[] = [];
 
     for (const file of files) {
@@ -220,7 +224,7 @@ export default function App() {
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept="audio/*"
+                accept="audio/*,video/webm,.webm"
                 webkitdirectory="true"
               />
             </div>
