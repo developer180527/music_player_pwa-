@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import * as mm from 'music-metadata';
-import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings, Plus } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings, Plus, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Song {
@@ -26,6 +26,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'library' | 'search' | 'settings'>('library');
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Authentication state
+  const [requireAuth, setRequireAuth] = useState(() => localStorage.getItem('requireAuth') === 'true');
+  const [isLocked, setIsLocked] = useState(() => localStorage.getItem('requireAuth') === 'true');
+  const [authSupported, setAuthSupported] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   // Theme state
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -51,6 +57,133 @@ export default function App() {
     }
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  const [inIframe, setInIframe] = useState(false);
+
+  // Check if WebAuthn is supported
+  useEffect(() => {
+    try {
+      setInIframe(window.self !== window.top);
+    } catch (e) {
+      setInIframe(true);
+    }
+    if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(setAuthSupported);
+    }
+  }, []);
+
+  // Authentication handlers
+  const handleUnlock = async () => {
+    try {
+      setAuthError('');
+      
+      if (window.self !== window.top) {
+        setAuthError('Browser security prevents unlocking inside an iframe. Please open the app in a new tab.');
+        return;
+      }
+
+      const credentialIdStr = localStorage.getItem('authCredentialId');
+      if (!credentialIdStr) {
+        setIsLocked(false);
+        return;
+      }
+
+      const base64UrlDecode = (str: string) => {
+        let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) base64 += '=';
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+      };
+
+      const credentialId = base64UrlDecode(credentialIdStr);
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+      await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          rpId: window.location.hostname,
+          allowCredentials: [{
+            type: "public-key",
+            id: credentialId
+          }],
+          userVerification: "required",
+          timeout: 60000
+        }
+      });
+      setIsLocked(false);
+    } catch (error) {
+      console.error('Authentication failed', error);
+      setAuthError('Authentication failed. Please try again.');
+    }
+  };
+
+  const toggleAuth = async () => {
+    if (requireAuth) {
+      localStorage.removeItem('requireAuth');
+      localStorage.removeItem('authCredentialId');
+      setRequireAuth(false);
+    } else {
+      if (inIframe) {
+        alert("Biometric authentication cannot be set up inside an iframe due to browser security restrictions. Please open the app in a new tab to enable this feature.");
+        return;
+      }
+      try {
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+        const userId = crypto.getRandomValues(new Uint8Array(16));
+        
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge,
+            rp: { name: "Music Player", id: window.location.hostname },
+            user: {
+              id: userId,
+              name: "user",
+              displayName: "User"
+            },
+            pubKeyCredParams: [
+              { type: "public-key", alg: -7 },
+              { type: "public-key", alg: -257 }
+            ],
+            authenticatorSelection: {
+              authenticatorAttachment: "platform",
+              userVerification: "required"
+            },
+            timeout: 60000,
+            attestation: "none"
+          }
+        }) as PublicKeyCredential;
+
+        if (credential) {
+          const base64UrlEncode = (buffer: ArrayBuffer) => {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          };
+
+          localStorage.setItem('authCredentialId', base64UrlEncode(credential.rawId));
+          localStorage.setItem('requireAuth', 'true');
+          setRequireAuth(true);
+        }
+      } catch (error) {
+        console.error('Failed to setup authentication', error);
+        alert('Failed to setup authentication. Your device might not support it or you cancelled the prompt.');
+      }
+    }
+  };
+
+  // Auto-prompt unlock on initial load if locked
+  useEffect(() => {
+    if (isLocked) {
+      handleUnlock();
+    }
+  }, []);
 
   // Initialize audio element
   useEffect(() => {
@@ -209,6 +342,27 @@ export default function App() {
     song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     song.artist.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (isLocked) {
+    return (
+      <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col items-center justify-center p-6 transition-colors duration-500">
+        <div className="w-24 h-24 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center mb-8 shadow-inner">
+          <Lock size={40} className="text-rose-500" />
+        </div>
+        <h1 className="text-3xl font-bold mb-3 tracking-tight">App Locked</h1>
+        <p className="text-zinc-500 dark:text-zinc-400 text-center mb-10 text-[17px]">
+          Authentication is required to open this app.
+        </p>
+        {authError && <p className="text-rose-500 mb-6 font-medium">{authError}</p>}
+        <button 
+          onClick={handleUnlock}
+          className="bg-rose-500 text-white px-10 py-4 rounded-full font-semibold text-[17px] hover:bg-rose-600 active:scale-95 transition-all shadow-[0_8px_30px_rgba(244,63,94,0.3)]"
+        >
+          Unlock App
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden transition-colors duration-500">
@@ -398,6 +552,38 @@ export default function App() {
                     />
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 mt-8">
+              <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Security</h2>
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50">
+                <div className="flex items-center justify-between p-4 px-5">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-[17px]">Require Authentication to open app</span>
+                    <span className="text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5">FaceID, TouchID, or Passcode</span>
+                  </div>
+                  <button 
+                    onClick={toggleAuth}
+                    disabled={!authSupported || (inIframe && !requireAuth)}
+                    className={`w-[50px] h-[30px] rounded-full transition-colors relative shadow-inner flex-shrink-0 ml-4 ${requireAuth ? 'bg-rose-500' : 'bg-zinc-200 dark:bg-zinc-700'} ${(!authSupported || (inIframe && !requireAuth)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <motion.div 
+                      className="w-[26px] h-[26px] bg-white rounded-full absolute top-[2px] shadow-sm border border-black/5"
+                      animate={{ left: requireAuth ? '22px' : '2px' }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  </button>
+                </div>
+                {!authSupported ? (
+                  <div className="px-5 pb-4 text-[13px] text-rose-500">
+                    Biometric authentication is not supported on this device or browser.
+                  </div>
+                ) : (inIframe && !requireAuth) ? (
+                  <div className="px-5 pb-4 text-[13px] text-amber-500 dark:text-amber-400">
+                    Please open the app in a new tab to enable this feature (iframe restricted).
+                  </div>
+                ) : null}
               </div>
             </div>
           </motion.div>
