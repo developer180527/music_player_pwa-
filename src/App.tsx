@@ -124,13 +124,55 @@ export default function App() {
   const toggleAuth = async () => {
     if (requireAuth) {
       localStorage.removeItem('requireAuth');
-      localStorage.removeItem('authCredentialId');
+      // We purposefully keep authCredentialId so we can reuse it later
       setRequireAuth(false);
     } else {
       if (inIframe) {
         alert("Biometric authentication cannot be set up inside an iframe due to browser security restrictions. Please open the app in a new tab to enable this feature.");
         return;
       }
+      
+      const existingCredentialIdStr = localStorage.getItem('authCredentialId');
+      
+      if (existingCredentialIdStr) {
+        try {
+          const base64UrlDecode = (str: string) => {
+            let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) base64 += '=';
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+          };
+
+          const credentialId = base64UrlDecode(existingCredentialIdStr);
+          const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+          await navigator.credentials.get({
+            publicKey: {
+              challenge,
+              rpId: window.location.hostname,
+              allowCredentials: [{
+                type: "public-key",
+                id: credentialId
+              }],
+              userVerification: "required",
+              timeout: 60000
+            }
+          });
+          
+          localStorage.setItem('requireAuth', 'true');
+          setRequireAuth(true);
+          return;
+        } catch (e) {
+          console.warn("Existing credential failed or was removed from device. Creating a new one.", e);
+          localStorage.removeItem('authCredentialId');
+          // Fall through to create a new one
+        }
+      }
+
       try {
         const challenge = crypto.getRandomValues(new Uint8Array(32));
         const userId = crypto.getRandomValues(new Uint8Array(16));
@@ -173,7 +215,7 @@ export default function App() {
         }
       } catch (error) {
         console.error('Failed to setup authentication', error);
-        alert('Failed to setup authentication. Your device might not support it or you cancelled the prompt.');
+        alert('Authentication failed. Your device might not support it or you cancelled the prompt.');
       }
     }
   };
@@ -398,7 +440,7 @@ export default function App() {
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac,.webm"
+                accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
               />
               {/* @ts-ignore - webkitdirectory is non-standard but widely supported */}
               <input 
@@ -407,7 +449,7 @@ export default function App() {
                 onChange={handleFileSelect} 
                 className="hidden" 
                 multiple 
-                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac,.webm"
+                accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
                 webkitdirectory="true"
               />
             </div>
