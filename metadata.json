@@ -1,0 +1,5 @@
+{
+  "name": "Local Music Player",
+  "description": "A PWA local music player with Apple Music style UI and background playback.",
+  "requestFramePermissions": []
+}
