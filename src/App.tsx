@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import * as mm from 'music-metadata';
-import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings, Plus, Lock } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings, Plus, Lock, Shuffle, Repeat, Repeat1, Volume, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Song {
@@ -26,6 +26,19 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'library' | 'search' | 'settings'>('library');
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<'none' | 'all' | 'one'>('none');
+  const [volume, setVolume] = useState(1);
+
+  const isShuffleRef = useRef(isShuffle);
+  const repeatModeRef = useRef(repeatMode);
+  const songsLengthRef = useRef(songs.length);
+
+  useEffect(() => {
+    isShuffleRef.current = isShuffle;
+    repeatModeRef.current = repeatMode;
+    songsLengthRef.current = songs.length;
+  }, [isShuffle, repeatMode, songs.length]);
 
   // Authentication state
   const [requireAuth, setRequireAuth] = useState(() => localStorage.getItem('requireAuth') === 'true');
@@ -234,7 +247,7 @@ export default function App() {
 
     const handleTimeUpdate = () => setProgress(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
-    const handleEnded = () => playNext();
+    const handleEnded = () => playNext(true);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
 
@@ -278,7 +291,7 @@ export default function App() {
       navigator.mediaSession.setActionHandler('play', () => audioRef.current?.play());
       navigator.mediaSession.setActionHandler('pause', () => audioRef.current?.pause());
       navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
-      navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+      navigator.mediaSession.setActionHandler('nexttrack', () => playNext(false));
     }
 
     return () => {
@@ -346,22 +359,59 @@ export default function App() {
     }
   };
 
-  const playNext = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (songs.length === 0) return;
+  const playNext = (isAutoPlay: boolean = false) => {
+    if (songsLengthRef.current === 0) return;
+    
     setCurrentSongIndex(prev => {
       if (prev === null) return 0;
-      return (prev + 1) % songs.length;
+      
+      if (isAutoPlay && repeatModeRef.current === 'one') {
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(console.error);
+        }
+        return prev;
+      }
+
+      if (isAutoPlay && repeatModeRef.current === 'none' && prev === songsLengthRef.current - 1) {
+        setIsPlaying(false);
+        return prev;
+      }
+
+      if (isShuffleRef.current) {
+        let nextIndex = Math.floor(Math.random() * songsLengthRef.current);
+        if (nextIndex === prev && songsLengthRef.current > 1) {
+          nextIndex = (nextIndex + 1) % songsLengthRef.current;
+        }
+        return nextIndex;
+      }
+      return (prev + 1) % songsLengthRef.current;
     });
   };
 
-  const playPrev = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (songs.length === 0) return;
+  const playPrev = () => {
+    if (songsLengthRef.current === 0) return;
     setCurrentSongIndex(prev => {
       if (prev === null) return 0;
-      return (prev - 1 + songs.length) % songs.length;
+      if (isShuffleRef.current) {
+        let prevIndex = Math.floor(Math.random() * songsLengthRef.current);
+        if (prevIndex === prev && songsLengthRef.current > 1) {
+          prevIndex = (prevIndex - 1 + songsLengthRef.current) % songsLengthRef.current;
+        }
+        return prevIndex;
+      }
+      return (prev - 1 + songsLengthRef.current) % songsLengthRef.current;
     });
+  };
+
+  const handleNextClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    playNext(false);
+  };
+
+  const handlePrevClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    playPrev();
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -369,6 +419,21 @@ export default function App() {
     const time = Number(e.target.value);
     audioRef.current.currentTime = time;
     setProgress(time);
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!audioRef.current) return;
+    const newVolume = Number(e.target.value);
+    audioRef.current.volume = newVolume;
+    setVolume(newVolume);
+  };
+
+  const toggleRepeat = () => {
+    setRepeatMode(prev => {
+      if (prev === 'none') return 'all';
+      if (prev === 'all') return 'one';
+      return 'none';
+    });
   };
 
   const formatTime = (time: number) => {
@@ -663,7 +728,7 @@ export default function App() {
                 {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
               </button>
               <button 
-                onClick={playNext} 
+                onClick={handleNextClick} 
                 className="text-zinc-900 dark:text-white hover:scale-110 active:scale-90 transition-transform"
               >
                 <SkipForward size={24} fill="currentColor" />
@@ -754,14 +819,21 @@ export default function App() {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mb-12">
-                    <input 
-                      type="range" 
-                      min={0} 
-                      max={duration || 100} 
-                      value={progress}
-                      onChange={handleSeek}
-                    />
+                  <div className="mb-10 group">
+                    <div className="relative h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden flex items-center">
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-zinc-900 dark:bg-white pointer-events-none"
+                        style={{ width: `${(progress / (duration || 1)) * 100}%` }}
+                      />
+                      <input 
+                        type="range" 
+                        min={0} 
+                        max={duration || 100} 
+                        value={progress}
+                        onChange={handleSeek}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </div>
                     <div className="flex justify-between text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-2 font-mono tracking-wider">
                       <span>{formatTime(progress)}</span>
                       <span>-{formatTime(duration - progress)}</span>
@@ -769,19 +841,56 @@ export default function App() {
                   </div>
 
                   {/* Controls */}
-                  <div className="flex items-center justify-center gap-10">
-                    <button onClick={playPrev} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
-                      <SkipBack size={44} fill="currentColor" />
-                    </button>
+                  <div className="flex items-center justify-between mb-10">
                     <button 
-                      onClick={togglePlayPause} 
-                      className="w-20 h-20 flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.2)]"
+                      onClick={() => setIsShuffle(!isShuffle)} 
+                      className={`transition-colors active:scale-90 ${isShuffle ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
                     >
-                      {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-2" />}
+                      <Shuffle size={24} strokeWidth={2.5} />
                     </button>
-                    <button onClick={playNext} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
-                      <SkipForward size={44} fill="currentColor" />
+                    
+                    <div className="flex items-center gap-8">
+                      <button onClick={handlePrevClick} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
+                        <SkipBack size={44} fill="currentColor" />
+                      </button>
+                      <button 
+                        onClick={togglePlayPause} 
+                        className="w-20 h-20 flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.2)]"
+                      >
+                        {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-2" />}
+                      </button>
+                      <button onClick={handleNextClick} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
+                        <SkipForward size={44} fill="currentColor" />
+                      </button>
+                    </div>
+
+                    <button 
+                      onClick={toggleRepeat} 
+                      className={`transition-colors active:scale-90 ${repeatMode !== 'none' ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
+                    >
+                      {repeatMode === 'one' ? <Repeat1 size={24} strokeWidth={2.5} /> : <Repeat size={24} strokeWidth={2.5} />}
                     </button>
+                  </div>
+
+                  {/* Volume Control */}
+                  <div className="flex items-center gap-3 text-zinc-400">
+                    <Volume size={18} />
+                    <div className="relative flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden flex items-center">
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-zinc-400 dark:bg-zinc-500 pointer-events-none"
+                        style={{ width: `${volume * 100}%` }}
+                      />
+                      <input 
+                        type="range" 
+                        min={0} 
+                        max={1} 
+                        step={0.01}
+                        value={volume}
+                        onChange={handleVolumeChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </div>
+                    <Volume2 size={18} />
                   </div>
                 </div>
               </div>
