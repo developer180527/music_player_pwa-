@@ -7,6 +7,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import * as mm from 'music-metadata';
 import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings, Plus, Lock, Shuffle, Repeat, Repeat1, Volume, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { get, set } from 'idb-keyval';
 
 interface Song {
   file: File;
@@ -29,6 +30,7 @@ export default function App() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'none' | 'all' | 'one'>('none');
   const [volume, setVolume] = useState(1);
+  const [isScanning, setIsScanning] = useState(false);
 
   const isShuffleRef = useRef(isShuffle);
   const repeatModeRef = useRef(repeatMode);
@@ -301,7 +303,7 @@ export default function App() {
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    
+    setIsScanning(true);
     const files = Array.from(e.target.files).filter(f => {
       const name = f.name.toLowerCase();
       return f.type.startsWith('audio/') || 
@@ -314,6 +316,11 @@ export default function App() {
              name.endsWith('.ogg') ||
              name.endsWith('.flac');
     });
+    await processFiles(files);
+    setIsScanning(false);
+  };
+
+  const processFiles = async (files: File[]) => {
     const parsedSongs: Song[] = [];
 
     for (const file of files) {
@@ -348,6 +355,85 @@ export default function App() {
 
     setSongs(prev => [...prev, ...parsedSongs]);
   };
+
+  const handleDirectorySelect = async () => {
+    try {
+      if ('showDirectoryPicker' in window) {
+        // @ts-ignore
+        const directoryHandle = await window.showDirectoryPicker();
+        await set('musicDirectoryHandle', directoryHandle);
+        await loadFromDirectoryHandle(directoryHandle);
+      } else {
+        folderInputRef.current?.click();
+      }
+    } catch (error) {
+      console.error('Error selecting directory:', error);
+    }
+  };
+
+  const loadFromDirectoryHandle = async (directoryHandle: any) => {
+    setIsScanning(true);
+    const files: File[] = [];
+    
+    async function scanDirectory(handle: any) {
+      for await (const entry of handle.values()) {
+        if (entry.kind === 'file') {
+          const file = await entry.getFile();
+          const name = file.name.toLowerCase();
+          if (file.type.startsWith('audio/') || 
+              file.type === 'video/webm' || 
+              name.endsWith('.webm') ||
+              name.endsWith('.mp3') ||
+              name.endsWith('.m4a') ||
+              name.endsWith('.wav') ||
+              name.endsWith('.aac') ||
+              name.endsWith('.ogg') ||
+              name.endsWith('.flac')) {
+            files.push(file);
+          }
+        } else if (entry.kind === 'directory') {
+          await scanDirectory(entry);
+        }
+      }
+    }
+
+    try {
+      await scanDirectory(directoryHandle);
+      await processFiles(files);
+    } catch (error) {
+      console.error('Error scanning directory:', error);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Try to load cached directory handle on mount
+  useEffect(() => {
+    const loadCachedDirectory = async () => {
+      try {
+        const handle = await get('musicDirectoryHandle');
+        if (handle) {
+          // @ts-ignore
+          const permission = await handle.queryPermission({ mode: 'read' });
+          if (permission === 'granted') {
+            await loadFromDirectoryHandle(handle);
+          } else {
+            // @ts-ignore
+            const request = await handle.requestPermission({ mode: 'read' });
+            if (request === 'granted') {
+              await loadFromDirectoryHandle(handle);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load cached directory:', error);
+      }
+    };
+    
+    if (!isLocked) {
+      loadCachedDirectory();
+    }
+  }, [isLocked]);
 
   const togglePlayPause = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -492,7 +578,7 @@ export default function App() {
                   <span className="hidden sm:inline">Add </span>Files
                 </button>
                 <button 
-                  onClick={() => folderInputRef.current?.click()}
+                  onClick={handleDirectorySelect}
                   className="hidden sm:flex text-rose-500 font-semibold items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors active:scale-95"
                 >
                   <FolderOpen size={20} strokeWidth={2.5} />
@@ -519,7 +605,14 @@ export default function App() {
               />
             </div>
 
-            {songs.length === 0 ? (
+            {isScanning ? (
+              <div className="flex flex-col items-center justify-center h-64 text-zinc-400 dark:text-zinc-500 space-y-4">
+                <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center shadow-inner animate-pulse">
+                  <Search size={32} className="opacity-50 animate-spin" />
+                </div>
+                <p className="text-lg font-medium">Scanning library...</p>
+              </div>
+            ) : songs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-zinc-400 dark:text-zinc-500 space-y-4">
                 <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
                   <Music2 size={32} className="opacity-50" />
