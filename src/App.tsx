@@ -5,18 +5,19 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import * as mm from 'music-metadata';
-import { Play, Pause, SkipForward, SkipBack, Music2, Search, Library, ChevronDown, FolderOpen, Settings, Plus, Lock, Shuffle, Repeat, Repeat1, Volume, Volume2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'motion/react';
 import { get, set } from 'idb-keyval';
 
-interface Song {
-  file: File;
-  title: string;
-  artist: string;
-  album: string;
-  coverUrl: string;
-  duration: number;
-}
+import { Song, AccentColor } from './types';
+import { ACCENT_COLORS } from './constants';
+
+import { LockScreen } from './components/LockScreen';
+import { BottomNav } from './components/BottomNav';
+import { MiniPlayer } from './components/MiniPlayer';
+import { NowPlaying } from './components/NowPlaying';
+import { LibraryTab } from './components/LibraryTab';
+import { SearchTab } from './components/SearchTab';
+import { SettingsTab } from './components/SettingsTab';
 
 export default function App() {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -31,6 +32,21 @@ export default function App() {
   const [repeatMode, setRepeatMode] = useState<'none' | 'all' | 'one'>('none');
   const [volume, setVolume] = useState(1);
   const [isScanning, setIsScanning] = useState(false);
+
+  // New settings state
+  const [accentColor, setAccentColor] = useState<AccentColor>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('accentColor') as AccentColor;
+      if (saved && ACCENT_COLORS[saved]) return saved;
+    }
+    return 'rose';
+  });
+  const [keepScreenOn, setKeepScreenOn] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('keepScreenOn') === 'true';
+    }
+    return false;
+  });
 
   const isShuffleRef = useRef(isShuffle);
   const repeatModeRef = useRef(repeatMode);
@@ -74,6 +90,50 @@ export default function App() {
   }, [theme]);
 
   const [inIframe, setInIframe] = useState(false);
+  const wakeLockRef = useRef<any>(null);
+
+  // Wake Lock logic
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      if ('wakeLock' in navigator && keepScreenOn && isPlaying) {
+        try {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        } catch (err) {
+          console.error(`Wake Lock error: ${err}`);
+        }
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current !== null) {
+        try {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+        } catch (err) {
+          console.error(`Wake Lock release error: ${err}`);
+        }
+      }
+    };
+
+    if (keepScreenOn && isPlaying) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    const handleVisibilityChange = () => {
+      if (wakeLockRef.current !== null && document.visibilityState === 'visible' && keepScreenOn && isPlaying) {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      releaseWakeLock();
+    };
+  }, [keepScreenOn, isPlaying]);
 
   // Check if WebAuthn is supported
   useEffect(() => {
@@ -304,7 +364,7 @@ export default function App() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     setIsScanning(true);
-    const files = Array.from(e.target.files).filter(f => {
+    const files = (Array.from(e.target.files) as File[]).filter(f => {
       const name = f.name.toLowerCase();
       return f.type.startsWith('audio/') || 
              f.type === 'video/webm' || 
@@ -522,473 +582,114 @@ export default function App() {
     });
   };
 
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return '0:00';
-    const mins = Math.floor(time / 60);
-    const secs = Math.floor(time % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const currentSong = currentSongIndex !== null ? songs[currentSongIndex] : null;
-
-  const filteredSongs = songs.filter(song => 
-    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    song.artist.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (isLocked) {
     return (
-      <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col items-center justify-center p-6">
-        <div className="w-24 h-24 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center mb-8 shadow-inner">
-          <Lock size={40} className="text-rose-500" />
-        </div>
-        <h1 className="text-3xl font-bold mb-3 tracking-tight">App Locked</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 text-center mb-10 text-[17px]">
-          Authentication is required to open this app.
-        </p>
-        {authError && <p className="text-rose-500 mb-6 font-medium">{authError}</p>}
-        <button 
-          onClick={handleUnlock}
-          className="bg-rose-500 text-white px-10 py-4 rounded-full font-semibold text-[17px] hover:bg-rose-600 active:scale-95 transition-all shadow-[0_8px_30px_rgba(244,63,94,0.3)]"
-        >
-          Unlock App
-        </button>
-      </div>
+      <LockScreen 
+        accentColor={accentColor}
+        authError={authError}
+        onUnlock={handleUnlock}
+      />
     );
   }
 
   return (
-    <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden">
+    <div className="flex-1 w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden">
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-40 px-6 pt-14">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-64 px-6 pt-14">
         {activeTab === 'library' && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
-          >
-            <div className="flex justify-between items-end">
-              <h1 className="text-4xl font-bold tracking-tight">Library</h1>
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-rose-500 font-semibold flex items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors active:scale-95"
-                >
-                  <Plus size={20} strokeWidth={2.5} />
-                  <span className="hidden sm:inline">Add </span>Files
-                </button>
-                <button 
-                  onClick={handleDirectorySelect}
-                  className="hidden sm:flex text-rose-500 font-semibold items-center gap-1.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors active:scale-95"
-                >
-                  <FolderOpen size={20} strokeWidth={2.5} />
-                  Add Folder
-                </button>
-              </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileSelect} 
-                className="hidden" 
-                multiple 
-                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac"
-              />
-              {/* @ts-ignore - webkitdirectory is non-standard but widely supported */}
-              <input 
-                type="file" 
-                ref={folderInputRef} 
-                onChange={handleFileSelect} 
-                className="hidden" 
-                multiple 
-                accept=".mp3,.wav,.m4a,.aac,.ogg,.flac"
-                webkitdirectory="true"
-              />
-            </div>
-
-            {isScanning ? (
-              <div className="flex flex-col items-center justify-center h-64 text-zinc-400 dark:text-zinc-500 space-y-4">
-                <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center shadow-inner animate-pulse">
-                  <Search size={32} className="opacity-50 animate-spin" />
-                </div>
-                <p className="text-lg font-medium">Scanning library...</p>
-              </div>
-            ) : songs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-zinc-400 dark:text-zinc-500 space-y-4">
-                <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center shadow-inner">
-                  <Music2 size={32} className="opacity-50" />
-                </div>
-                <p className="text-lg font-medium">No music found.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {songs.map((song, idx) => {
-                  const isCurrent = currentSongIndex === idx;
-                  return (
-                    <div 
-                      key={idx} 
-                      onClick={() => setCurrentSongIndex(idx)}
-                      className={`group flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${isCurrent ? 'bg-zinc-100 dark:bg-white/10' : 'hover:bg-zinc-50 dark:hover:bg-white/5'}`}
-                    >
-                      <div className="relative w-14 h-14 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
-                        {song.coverUrl ? (
-                          <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-                            <Music2 size={24} />
-                          </div>
-                        )}
-                        {isCurrent && (
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-0.5">
-                            {isPlaying ? (
-                              <>
-                                <div className="w-1 bg-white rounded-full eq-bar" />
-                                <div className="w-1 bg-white rounded-full eq-bar" />
-                                <div className="w-1 bg-white rounded-full eq-bar" />
-                              </>
-                            ) : (
-                              <Pause size={16} className="text-white" fill="currentColor" />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 border-b border-zinc-100 dark:border-white/5 pb-3 pt-1 group-last:border-none">
-                        <h3 className={`font-semibold truncate text-[17px] tracking-tight ${isCurrent ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>
-                          {song.title}
-                        </h3>
-                        <p className="text-zinc-500 dark:text-zinc-400 text-[15px] truncate mt-0.5">{song.artist}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </motion.div>
+          <LibraryTab 
+            songs={songs}
+            currentSongIndex={currentSongIndex}
+            isScanning={isScanning}
+            accentColor={accentColor}
+            fileInputRef={fileInputRef}
+            folderInputRef={folderInputRef}
+            onSongSelect={setCurrentSongIndex}
+            onAddFiles={() => fileInputRef.current?.click()}
+            onAddFolder={handleDirectorySelect}
+            onFileSelect={handleFileSelect}
+          />
         )}
 
         {activeTab === 'search' && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <h1 className="text-4xl font-bold tracking-tight">Search</h1>
-            <div className="relative shadow-sm rounded-2xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
-              <input 
-                type="text" 
-                placeholder="Artists, Songs, or Albums" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-2xl py-4 pl-12 pr-4 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all placeholder:text-zinc-400"
-              />
-            </div>
-            
-            <div className="space-y-2 mt-8">
-              {filteredSongs.map((song, idx) => {
-                const originalIdx = songs.indexOf(song);
-                const isCurrent = currentSongIndex === originalIdx;
-                return (
-                  <div 
-                    key={idx} 
-                    onClick={() => setCurrentSongIndex(originalIdx)}
-                    className={`group flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all duration-200 active:scale-[0.98] ${isCurrent ? 'bg-zinc-100 dark:bg-white/10' : 'hover:bg-zinc-50 dark:hover:bg-white/5'}`}
-                  >
-                    <div className="relative w-14 h-14 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
-                      {song.coverUrl ? (
-                        <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-                          <Music2 size={24} />
-                        </div>
-                      )}
-                      {isCurrent && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-0.5">
-                          {isPlaying ? (
-                            <>
-                              <div className="w-1 bg-white rounded-full eq-bar" />
-                              <div className="w-1 bg-white rounded-full eq-bar" />
-                              <div className="w-1 bg-white rounded-full eq-bar" />
-                            </>
-                          ) : (
-                            <Pause size={16} className="text-white" fill="currentColor" />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 border-b border-zinc-100 dark:border-white/5 pb-3 pt-1 group-last:border-none">
-                      <h3 className={`font-semibold truncate text-[17px] tracking-tight ${isCurrent ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>
-                        {song.title}
-                      </h3>
-                      <p className="text-zinc-500 dark:text-zinc-400 text-[15px] truncate mt-0.5">{song.artist}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
+          <SearchTab 
+            songs={songs}
+            searchQuery={searchQuery}
+            currentSongIndex={currentSongIndex}
+            accentColor={accentColor}
+            onSearchChange={setSearchQuery}
+            onSongSelect={setCurrentSongIndex}
+          />
         )}
 
         {activeTab === 'settings' && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
-          >
-            <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
-            
-            <div className="space-y-4">
-              <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Appearance</h2>
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50">
-                <div className="flex items-center justify-between p-4 px-5">
-                  <span className="font-medium text-[17px]">Dark Mode</span>
-                  <button 
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className={`w-[50px] h-[30px] rounded-full transition-colors relative shadow-inner ${theme === 'dark' ? 'bg-rose-500' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-                  >
-                    <motion.div 
-                      className="w-[26px] h-[26px] bg-white rounded-full absolute top-[2px] shadow-sm border border-black/5"
-                      animate={{ left: theme === 'dark' ? '22px' : '2px' }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 mt-8">
-              <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Security</h2>
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50">
-                <div className="flex items-center justify-between p-4 px-5">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-[17px]">Require Authentication to open app</span>
-                    <span className="text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5">FaceID, TouchID, or Passcode</span>
-                  </div>
-                  <button 
-                    onClick={toggleAuth}
-                    disabled={!authSupported || (inIframe && !requireAuth)}
-                    className={`w-[50px] h-[30px] rounded-full transition-colors relative shadow-inner flex-shrink-0 ml-4 ${requireAuth ? 'bg-rose-500' : 'bg-zinc-200 dark:bg-zinc-700'} ${(!authSupported || (inIframe && !requireAuth)) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <motion.div 
-                      className="w-[26px] h-[26px] bg-white rounded-full absolute top-[2px] shadow-sm border border-black/5"
-                      animate={{ left: requireAuth ? '22px' : '2px' }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-                {!authSupported ? (
-                  <div className="px-5 pb-4 text-[13px] text-rose-500">
-                    Biometric authentication is not supported on this device or browser.
-                  </div>
-                ) : (inIframe && !requireAuth) ? (
-                  <div className="px-5 pb-4 text-[13px] text-amber-500 dark:text-amber-400">
-                    Please open the app in a new tab to enable this feature (iframe restricted).
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </motion.div>
+          <SettingsTab 
+            theme={theme}
+            accentColor={accentColor}
+            keepScreenOn={keepScreenOn}
+            requireAuth={requireAuth}
+            authSupported={authSupported}
+            inIframe={inIframe}
+            onThemeChange={setTheme}
+            onAccentColorChange={(color) => {
+              setAccentColor(color);
+              localStorage.setItem('accentColor', color);
+            }}
+            onKeepScreenOnChange={(keep) => {
+              setKeepScreenOn(keep);
+              localStorage.setItem('keepScreenOn', String(keep));
+            }}
+            onRequireAuthToggle={toggleAuth}
+          />
         )}
       </div>
 
       {/* Mini Player */}
       <AnimatePresence>
         {currentSong && !isNowPlayingOpen && (
-          <motion.div 
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            onClick={() => setIsNowPlayingOpen(true)}
-            className="fixed bottom-[104px] left-4 right-4 bg-white/70 dark:bg-zinc-800/70 backdrop-blur-3xl backdrop-saturate-150 rounded-2xl p-2 flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-white/40 dark:border-white/10 cursor-pointer z-40 active:scale-[0.98]"
-          >
-            <div className="w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-700 overflow-hidden flex-shrink-0 shadow-sm">
-              {currentSong.coverUrl ? (
-                <img src={currentSong.coverUrl} alt="cover" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-500">
-                  <Music2 size={20} />
-                </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-[15px] truncate text-zinc-900 dark:text-white tracking-tight">{currentSong.title}</h4>
-              <p className="text-zinc-500 dark:text-zinc-400 text-[13px] truncate">{currentSong.artist}</p>
-            </div>
-            <div className="flex items-center gap-4 pr-4">
-              <button 
-                onClick={togglePlayPause} 
-                className="text-zinc-900 dark:text-white hover:scale-110 active:scale-90 transition-transform"
-              >
-                {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
-              </button>
-              <button 
-                onClick={handleNextClick} 
-                className="text-zinc-900 dark:text-white hover:scale-110 active:scale-90 transition-transform"
-              >
-                <SkipForward size={24} fill="currentColor" />
-              </button>
-            </div>
-          </motion.div>
+          <MiniPlayer 
+            song={currentSong}
+            isPlaying={isPlaying}
+            progress={progress}
+            duration={duration}
+            accentColor={accentColor}
+            onOpen={() => setIsNowPlayingOpen(true)}
+            onPlayPause={togglePlayPause}
+            onNext={handleNextClick}
+          />
         )}
       </AnimatePresence>
 
-      {/* Floating Bottom Nav */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl backdrop-saturate-150 rounded-full px-8 py-3.5 flex gap-10 items-center border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] z-30">
-        <button 
-          onClick={() => setActiveTab('library')}
-          className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'library' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
-        >
-          <Library size={24} strokeWidth={activeTab === 'library' ? 2.5 : 2} />
-          <span className="text-[10px] font-semibold tracking-wide">Library</span>
-        </button>
-        <button 
-          onClick={() => setActiveTab('search')}
-          className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'search' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
-        >
-          <Search size={24} strokeWidth={activeTab === 'search' ? 2.5 : 2} />
-          <span className="text-[10px] font-semibold tracking-wide">Search</span>
-        </button>
-        <button 
-          onClick={() => setActiveTab('settings')}
-          className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'settings' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
-        >
-          <Settings size={24} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
-          <span className="text-[10px] font-semibold tracking-wide">Settings</span>
-        </button>
-      </div>
+      {/* Bottom Navigation */}
+      <BottomNav 
+        activeTab={activeTab}
+        accentColor={accentColor}
+        onTabChange={setActiveTab}
+      />
 
-      {/* Full Screen Now Playing */}
+      {/* Full Screen Player */}
       <AnimatePresence>
         {isNowPlayingOpen && currentSong && (
-          <motion.div 
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-            className="fixed inset-0 z-50 bg-[#fcfcfc] dark:bg-zinc-900 flex flex-col"
-          >
-            {/* Blurred Background */}
-            {currentSong.coverUrl && (
-              <div 
-                className="absolute inset-0 opacity-40 dark:opacity-50 blur-[80px] scale-125 pointer-events-none saturate-150"
-                style={{
-                  backgroundImage: `url(${currentSong.coverUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/60 to-[#fcfcfc] dark:from-black/10 dark:via-black/60 dark:to-black pointer-events-none" />
-
-            {/* Content */}
-            <div className="relative z-10 flex flex-col h-full px-8 py-12">
-              <button 
-                onClick={() => setIsNowPlayingOpen(false)}
-                className="self-center p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors active:scale-90"
-              >
-                <ChevronDown size={32} strokeWidth={2.5} />
-              </button>
-
-              <div className="flex-1 flex flex-col justify-center items-center mt-4">
-                <motion.div 
-                  className="w-full max-w-[340px] aspect-square rounded-3xl bg-zinc-200 dark:bg-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden mb-14"
-                  animate={{ scale: isPlaying ? 1 : 0.92 }}
-                  transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                >
-                  {currentSong.coverUrl ? (
-                    <img src={currentSong.coverUrl} alt="cover" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-                      <Music2 size={80} />
-                    </div>
-                  )}
-                </motion.div>
-
-                <div className="w-full max-w-[400px]">
-                  <div className="mb-10 flex justify-between items-center">
-                    <div className="min-w-0 flex-1 pr-4">
-                      <h2 className="text-2xl font-bold truncate text-zinc-900 dark:text-white tracking-tight">{currentSong.title}</h2>
-                      <p className="text-lg text-rose-500 dark:text-rose-400 truncate mt-1 font-medium">{currentSong.artist}</p>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="mb-10 group">
-                    <div className="relative h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden flex items-center">
-                      <div 
-                        className="absolute top-0 left-0 h-full bg-zinc-900 dark:bg-white pointer-events-none"
-                        style={{ width: `${(progress / (duration || 1)) * 100}%` }}
-                      />
-                      <input 
-                        type="range" 
-                        min={0} 
-                        max={duration || 100} 
-                        value={progress}
-                        onChange={handleSeek}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </div>
-                    <div className="flex justify-between text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-2 font-mono tracking-wider">
-                      <span>{formatTime(progress)}</span>
-                      <span>-{formatTime(duration - progress)}</span>
-                    </div>
-                  </div>
-
-                  {/* Controls */}
-                  <div className="flex items-center justify-between mb-10">
-                    <button 
-                      onClick={() => setIsShuffle(!isShuffle)} 
-                      className={`transition-colors active:scale-90 ${isShuffle ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
-                    >
-                      <Shuffle size={24} strokeWidth={2.5} />
-                    </button>
-                    
-                    <div className="flex items-center gap-8">
-                      <button onClick={handlePrevClick} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
-                        <SkipBack size={44} fill="currentColor" />
-                      </button>
-                      <button 
-                        onClick={togglePlayPause} 
-                        className="w-20 h-20 flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.2)]"
-                      >
-                        {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-2" />}
-                      </button>
-                      <button onClick={handleNextClick} className="text-zinc-900 dark:text-white hover:text-rose-500 dark:hover:text-rose-400 transition-colors active:scale-90">
-                        <SkipForward size={44} fill="currentColor" />
-                      </button>
-                    </div>
-
-                    <button 
-                      onClick={toggleRepeat} 
-                      className={`transition-colors active:scale-90 ${repeatMode !== 'none' ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
-                    >
-                      {repeatMode === 'one' ? <Repeat1 size={24} strokeWidth={2.5} /> : <Repeat size={24} strokeWidth={2.5} />}
-                    </button>
-                  </div>
-
-                  {/* Volume Control */}
-                  <div className="flex items-center gap-3 text-zinc-400">
-                    <Volume size={18} />
-                    <div className="relative flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden flex items-center">
-                      <div 
-                        className="absolute top-0 left-0 h-full bg-zinc-400 dark:bg-zinc-500 pointer-events-none"
-                        style={{ width: `${volume * 100}%` }}
-                      />
-                      <input 
-                        type="range" 
-                        min={0} 
-                        max={1} 
-                        step={0.01}
-                        value={volume}
-                        onChange={handleVolumeChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </div>
-                    <Volume2 size={18} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+          <NowPlaying 
+            song={currentSong}
+            isPlaying={isPlaying}
+            progress={progress}
+            duration={duration}
+            volume={volume}
+            isShuffle={isShuffle}
+            repeatMode={repeatMode}
+            accentColor={accentColor}
+            onClose={() => setIsNowPlayingOpen(false)}
+            onPlayPause={togglePlayPause}
+            onNext={handleNextClick}
+            onPrev={handlePrevClick}
+            onSeek={handleSeek}
+            onVolumeChange={handleVolumeChange}
+            onShuffleToggle={() => setIsShuffle(!isShuffle)}
+            onRepeatToggle={toggleRepeat}
+          />
         )}
       </AnimatePresence>
     </div>
