@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import * as mm from 'music-metadata';
 import { AnimatePresence, LayoutGroup } from 'motion/react';
+import MetadataWorker from './workers/metadata.worker.ts?worker';
 import { get, set } from 'idb-keyval';
 
 import { Song, AccentColor } from './types';
@@ -381,47 +381,45 @@ export default function App() {
   };
 
   const processFiles = async (files: File[]) => {
-    const parsedSongs: Song[] = [];
+    if (files.length === 0) return;
+    
+    return new Promise<void>((resolve) => {
+      const worker = new MetadataWorker();
+      const id = Date.now().toString();
 
-    for (const file of files) {
-      try {
-        const metadata = await mm.parseBlob(file);
-        let coverUrl = '';
-        let coverBlob: Blob | null = null;
-        if (metadata.common.picture && metadata.common.picture.length > 0) {
-          const picture = metadata.common.picture[0];
-          coverBlob = new Blob([picture.data], { type: picture.format });
-          coverUrl = URL.createObjectURL(coverBlob);
+      worker.onmessage = (e) => {
+        if (e.data.id === id) {
+          const { parsedSongs, isComplete } = e.data;
+          
+          if (parsedSongs && parsedSongs.length > 0) {
+            const newParsedSongs: Song[] = parsedSongs.map((s: any) => ({
+              ...s,
+              coverUrl: s.coverBlob ? URL.createObjectURL(s.coverBlob) : ''
+            }));
+
+            setSongs(prev => {
+              const existingIds = new Set(prev.map(s => s.file.name + s.file.size));
+              const uniqueNewSongs = newParsedSongs.filter(s => !existingIds.has(s.file.name + s.file.size));
+              const newSongs = [...prev, ...uniqueNewSongs];
+              set('library_songs', newSongs).catch(console.error);
+              return newSongs;
+            });
+          }
+          
+          if (isComplete) {
+            worker.terminate();
+            resolve();
+          }
         }
-        parsedSongs.push({
-          file,
-          title: metadata.common.title || file.name.replace(/\.[^/.]+$/, ""),
-          artist: metadata.common.artist || 'Unknown Artist',
-          album: metadata.common.album || 'Unknown Album',
-          coverUrl,
-          coverBlob,
-          duration: metadata.format.duration || 0,
-        });
-      } catch (error) {
-        console.error('Error parsing metadata for', file.name, error);
-        parsedSongs.push({
-          file,
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          artist: 'Unknown Artist',
-          album: 'Unknown Album',
-          coverUrl: '',
-          coverBlob: null,
-          duration: 0,
-        });
-      }
-    }
+      };
 
-    setSongs(prev => {
-      const existingIds = new Set(prev.map(s => s.file.name + s.file.size));
-      const uniqueNewSongs = parsedSongs.filter(s => !existingIds.has(s.file.name + s.file.size));
-      const newSongs = [...prev, ...uniqueNewSongs];
-      set('library_songs', newSongs).catch(console.error);
-      return newSongs;
+      worker.onerror = (error) => {
+        console.error('Worker error:', error);
+        worker.terminate();
+        resolve();
+      };
+
+      worker.postMessage({ id, files });
     });
   };
 
