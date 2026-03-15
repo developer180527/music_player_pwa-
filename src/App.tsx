@@ -387,10 +387,11 @@ export default function App() {
       try {
         const metadata = await mm.parseBlob(file);
         let coverUrl = '';
+        let coverBlob: Blob | null = null;
         if (metadata.common.picture && metadata.common.picture.length > 0) {
           const picture = metadata.common.picture[0];
-          const blob = new Blob([picture.data], { type: picture.format });
-          coverUrl = URL.createObjectURL(blob);
+          coverBlob = new Blob([picture.data], { type: picture.format });
+          coverUrl = URL.createObjectURL(coverBlob);
         }
         parsedSongs.push({
           file,
@@ -398,6 +399,7 @@ export default function App() {
           artist: metadata.common.artist || 'Unknown Artist',
           album: metadata.common.album || 'Unknown Album',
           coverUrl,
+          coverBlob,
           duration: metadata.format.duration || 0,
         });
       } catch (error) {
@@ -408,12 +410,19 @@ export default function App() {
           artist: 'Unknown Artist',
           album: 'Unknown Album',
           coverUrl: '',
+          coverBlob: null,
           duration: 0,
         });
       }
     }
 
-    setSongs(prev => [...prev, ...parsedSongs]);
+    setSongs(prev => {
+      const existingIds = new Set(prev.map(s => s.file.name + s.file.size));
+      const uniqueNewSongs = parsedSongs.filter(s => !existingIds.has(s.file.name + s.file.size));
+      const newSongs = [...prev, ...uniqueNewSongs];
+      set('library_songs', newSongs).catch(console.error);
+      return newSongs;
+    });
   };
 
   const handleDirectorySelect = async () => {
@@ -421,7 +430,6 @@ export default function App() {
       if ('showDirectoryPicker' in window) {
         // @ts-ignore
         const directoryHandle = await window.showDirectoryPicker();
-        await set('musicDirectoryHandle', directoryHandle);
         await loadFromDirectoryHandle(directoryHandle);
       } else {
         folderInputRef.current?.click();
@@ -467,31 +475,28 @@ export default function App() {
     }
   };
 
-  // Try to load cached directory handle on mount
+  // Load saved songs from IndexedDB on mount
   useEffect(() => {
-    const loadCachedDirectory = async () => {
+    const loadSavedSongs = async () => {
       try {
-        const handle = await get('musicDirectoryHandle');
-        if (handle) {
-          // @ts-ignore
-          const permission = await handle.queryPermission({ mode: 'read' });
-          if (permission === 'granted') {
-            await loadFromDirectoryHandle(handle);
-          } else {
-            // @ts-ignore
-            const request = await handle.requestPermission({ mode: 'read' });
-            if (request === 'granted') {
-              await loadFromDirectoryHandle(handle);
-            }
-          }
+        setIsScanning(true);
+        const savedSongs = await get<Song[]>('library_songs');
+        if (savedSongs && savedSongs.length > 0) {
+          const restoredSongs = savedSongs.map(song => ({
+            ...song,
+            coverUrl: song.coverBlob ? URL.createObjectURL(song.coverBlob) : ''
+          }));
+          setSongs(restoredSongs);
         }
       } catch (error) {
-        console.error('Failed to load cached directory:', error);
+        console.error('Failed to load songs from IDB:', error);
+      } finally {
+        setIsScanning(false);
       }
     };
     
     if (!isLocked) {
-      loadCachedDirectory();
+      loadSavedSongs();
     }
   }, [isLocked]);
 
