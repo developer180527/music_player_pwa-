@@ -1,6 +1,6 @@
-import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, Music2, ChevronDown, Shuffle, Repeat, Repeat1, Volume, Volume2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, SkipForward, SkipBack, Music2, ChevronDown, Shuffle, Repeat, Repeat1, Volume, Volume2, MoreVertical, Speaker, Headphones, Bluetooth } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Song, AccentColor } from '../types';
 import { ACCENT_COLORS } from '../constants';
 import { formatTime } from '../utils';
@@ -14,6 +14,7 @@ interface NowPlayingProps {
   isShuffle: boolean;
   repeatMode: 'none' | 'all' | 'one';
   accentColor: AccentColor;
+  audioRef: React.RefObject<HTMLAudioElement>;
   onClose: () => void;
   onPlayPause: () => void;
   onNext: () => void;
@@ -33,6 +34,7 @@ export function NowPlaying({
   isShuffle,
   repeatMode,
   accentColor,
+  audioRef,
   onClose,
   onPlayPause,
   onNext,
@@ -42,13 +44,75 @@ export function NowPlaying({
   onShuffleToggle,
   onRepeatToggle
 }: NowPlayingProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('default');
+  const [isSinkSupported, setIsSinkSupported] = useState(false);
+
+  useEffect(() => {
+    if (typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype) {
+      setIsSinkSupported(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchDevices = async () => {
+      if (!isSinkSupported || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+      try {
+        // Requesting audio permission might be needed to get device labels
+        // await navigator.mediaDevices.getUserMedia({ audio: true });
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const audioOutputs = allDevices.filter(device => device.kind === 'audiooutput');
+        setDevices(audioOutputs);
+      } catch (err) {
+        console.error('Error fetching audio devices:', err);
+      }
+    };
+
+    if (isMenuOpen) {
+      fetchDevices();
+    }
+  }, [isMenuOpen, isSinkSupported]);
+
+  const handleDeviceSelect = async (deviceId: string) => {
+    if (!audioRef.current || !isSinkSupported) return;
+    try {
+      // @ts-ignore - setSinkId is not in all TS definitions yet
+      await audioRef.current.setSinkId(deviceId);
+      setSelectedDeviceId(deviceId);
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error('Error setting audio output device:', error);
+    }
+  };
+
+  const getDeviceIcon = (label: string) => {
+    const lowerLabel = label.toLowerCase();
+    if (lowerLabel.includes('bluetooth') || lowerLabel.includes('airpods') || lowerLabel.includes('bose')) {
+      return <Bluetooth size={16} />;
+    }
+    if (lowerLabel.includes('headphone') || lowerLabel.includes('earbud')) {
+      return <Headphones size={16} />;
+    }
+    return <Speaker size={16} />;
+  };
+
   return (
     <motion.div 
+      layoutId="player-container"
       initial={{ opacity: 0, y: '100%' }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       className="fixed inset-0 bg-[#fcfcfc] dark:bg-black z-50 flex flex-col pt-safe pb-safe"
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0, bottom: 0.7 }}
+      onDragEnd={(e, info) => {
+        if (info.offset.y > 100 || info.velocity.y > 500) {
+          onClose();
+        }
+      }}
     >
       <div className="flex items-center justify-between px-6 py-4">
         <button 
@@ -65,19 +129,75 @@ export function NowPlaying({
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8">
-        <div className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
+        <motion.div layoutId="artwork" className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
           {song.coverUrl ? (
-            <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
+            <motion.img layoutId="artwork-image" src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
               <Music2 size={80} strokeWidth={1.5} />
             </div>
           )}
-        </div>
+        </motion.div>
 
-        <div className="w-full flex flex-col items-start mb-8">
-          <h2 className="text-2xl font-bold truncate w-full tracking-tight">{song.title}</h2>
-          <p className={`text-lg ${ACCENT_COLORS[accentColor].text} truncate w-full font-medium`}>{song.artist}</p>
+        <div className="w-full flex items-start justify-between mb-8 relative">
+          <div className="flex flex-col items-start flex-1 min-w-0 pr-4">
+            <motion.h2 layoutId="title" className="text-2xl font-bold truncate w-full tracking-tight">{song.title}</motion.h2>
+            <motion.p layoutId="artist" className={`text-lg ${ACCENT_COLORS[accentColor].text} truncate w-full font-medium`}>{song.artist}</motion.p>
+          </div>
+          
+          {isSinkSupported && (
+            <div className="relative">
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <MoreVertical size={24} />
+              </button>
+
+              <AnimatePresence>
+                {isMenuOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsMenuOpen(false)}
+                    />
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                      className="absolute bottom-full right-0 mb-2 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden z-50 origin-bottom-right"
+                    >
+                      <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
+                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Playback Device</h3>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto py-2">
+                        {devices.length > 0 ? (
+                          devices.map(device => (
+                            <button
+                              key={device.deviceId}
+                              onClick={() => handleDeviceSelect(device.deviceId)}
+                              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${selectedDeviceId === device.deviceId ? ACCENT_COLORS[accentColor].bgLight + ' ' + ACCENT_COLORS[accentColor].text : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
+                            >
+                              <div className={selectedDeviceId === device.deviceId ? ACCENT_COLORS[accentColor].text : 'text-zinc-400'}>
+                                {getDeviceIcon(device.label || 'Speaker')}
+                              </div>
+                              <span className="text-sm font-medium truncate flex-1">
+                                {device.label || (device.deviceId === 'default' ? 'System Default' : `Device ${device.deviceId.slice(0, 5)}...`)}
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-zinc-500 text-center">
+                            No devices found. Try clicking play first or check browser permissions.
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         <div className="w-full space-y-2 mb-8">

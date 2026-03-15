@@ -27,24 +27,25 @@ export function MiniPlayer({
 }: MiniPlayerProps) {
   return (
     <motion.div 
+      layoutId="player-container"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       onClick={onOpen}
       className="absolute bottom-[calc(env(safe-area-inset-bottom)+60px)] left-4 right-4 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
     >
-      <div className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
+      <motion.div layoutId="artwork" className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
         {song.coverUrl ? (
-          <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
+          <motion.img layoutId="artwork-image" src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
             <Music2 size={20} />
           </div>
         )}
-      </div>
+      </motion.div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-[15px] truncate">{song.title}</h3>
-        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</p>
+        <motion.h3 layoutId="title" className="font-semibold text-[15px] truncate">{song.title}</motion.h3>
+        <motion.p layoutId="artist" className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</motion.p>
       </div>
       <div className="flex items-center gap-2 pr-1">
         <button 
