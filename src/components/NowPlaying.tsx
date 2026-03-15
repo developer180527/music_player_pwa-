@@ -11,6 +11,7 @@ interface NowPlayingProps {
   progress: number;
   duration: number;
   volume: number;
+  speed: number;
   isShuffle: boolean;
   repeatMode: 'none' | 'all' | 'one';
   accentColor: AccentColor;
@@ -21,6 +22,7 @@ interface NowPlayingProps {
   onPrev: () => void;
   onSeek: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onVolumeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSpeedChange: (speed: number) => void;
   onShuffleToggle: () => void;
   onRepeatToggle: () => void;
 }
@@ -31,6 +33,7 @@ export function NowPlaying({
   progress,
   duration,
   volume,
+  speed,
   isShuffle,
   repeatMode,
   accentColor,
@@ -41,6 +44,7 @@ export function NowPlaying({
   onPrev,
   onSeek,
   onVolumeChange,
+  onSpeedChange,
   onShuffleToggle,
   onRepeatToggle
 }: NowPlayingProps) {
@@ -252,22 +256,46 @@ export function NowPlaying({
           </button>
         </div>
 
-        <div className="w-full flex items-center gap-4 px-4">
-          <Volume size={18} className="text-zinc-400 dark:text-zinc-500" />
-          <input 
-            type="range" 
-            min="0" 
-            max="1" 
-            step="0.01"
-            value={volume} 
-            onChange={onVolumeChange}
-            className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
-            style={{
-              background: `linear-gradient(to right, var(--tw-gradient-stops))`,
-              backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${volume * 100}%, transparent ${volume * 100}%)`
-            }}
-          />
-          <Volume2 size={18} className="text-zinc-400 dark:text-zinc-500" />
+        <div className="w-full flex flex-col gap-4 px-4">
+          <div className="flex items-center gap-4">
+            <Volume size={18} className="text-zinc-400 dark:text-zinc-500" />
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.01"
+              value={volume} 
+              onChange={onVolumeChange}
+              className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
+              style={{
+                background: `linear-gradient(to right, var(--tw-gradient-stops))`,
+                backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${volume * 100}%, transparent ${volume * 100}%)`
+              }}
+            />
+            <Volume2 size={18} className="text-zinc-400 dark:text-zinc-500" />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 w-[18px] text-right">
+              {speed.toFixed(1)}x
+            </span>
+            <input 
+              type="range" 
+              min="0.5" 
+              max="2" 
+              step="0.05" 
+              value={speed}
+              onChange={(e) => onSpeedChange(Number(e.target.value))}
+              className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
+              style={{
+                background: `linear-gradient(to right, var(--tw-gradient-stops))`,
+                backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${((speed - 0.5) / 1.5) * 100}%, transparent ${((speed - 0.5) / 1.5) * 100}%)`
+              }}
+            />
+            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 w-[18px]">
+              Spd
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>
