@@ -538,7 +538,7 @@ export default function App() {
 
   if (isLocked) {
     return (
-      <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col items-center justify-center p-6 transition-colors duration-500">
+      <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col items-center justify-center p-6">
         <div className="w-24 h-24 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center mb-8 shadow-inner">
           <Lock size={40} className="text-rose-500" />
         </div>
@@ -558,7 +558,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden transition-colors duration-500">
+    <div className="h-full w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden">
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto no-scrollbar pb-40 px-6 pt-14">
         {activeTab === 'library' && (
@@ -798,7 +798,7 @@ export default function App() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             onClick={() => setIsNowPlayingOpen(true)}
-            className="fixed bottom-[104px] left-4 right-4 bg-white/70 dark:bg-zinc-800/70 backdrop-blur-3xl backdrop-saturate-150 rounded-2xl p-2 flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-white/40 dark:border-white/10 cursor-pointer z-40 transition-colors active:scale-[0.98]"
+            className="fixed bottom-[104px] left-4 right-4 bg-white/70 dark:bg-zinc-800/70 backdrop-blur-3xl backdrop-saturate-150 rounded-2xl p-2 flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-white/40 dark:border-white/10 cursor-pointer z-40 active:scale-[0.98]"
           >
             <div className="w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-700 overflow-hidden flex-shrink-0 shadow-sm">
               {currentSong.coverUrl ? (
@@ -832,7 +832,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Floating Bottom Nav */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl backdrop-saturate-150 rounded-full px-8 py-3.5 flex gap-10 items-center border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] z-30 transition-colors">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl backdrop-saturate-150 rounded-full px-8 py-3.5 flex gap-10 items-center border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] z-30">
         <button 
           onClick={() => setActiveTab('library')}
           className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'library' ? 'text-rose-500' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
@@ -864,7 +864,7 @@ export default function App() {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-            className="fixed inset-0 z-50 bg-[#fcfcfc] dark:bg-zinc-900 flex flex-col transition-colors"
+            className="fixed inset-0 z-50 bg-[#fcfcfc] dark:bg-zinc-900 flex flex-col"
           >
             {/* Blurred Background */}
             {currentSong.coverUrl && (
@@ -877,7 +877,7 @@ export default function App() {
                 }}
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/60 to-[#fcfcfc] dark:from-black/10 dark:via-black/60 dark:to-black pointer-events-none transition-colors" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/60 to-[#fcfcfc] dark:from-black/10 dark:via-black/60 dark:to-black pointer-events-none" />
 
             {/* Content */}
             <div className="relative z-10 flex flex-col h-full px-8 py-12">
