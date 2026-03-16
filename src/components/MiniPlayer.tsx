@@ -15,6 +15,8 @@ interface MiniPlayerProps {
   onNext: (e: React.MouseEvent) => void;
 }
 
+const springConfig = { type: "spring", damping: 20, stiffness: 300, mass: 0.8 };
+
 export function MiniPlayer({
   song,
   isPlaying,
@@ -31,12 +33,13 @@ export function MiniPlayer({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
+      transition={springConfig}
       onClick={onOpen}
       className="absolute bottom-[calc(env(safe-area-inset-bottom)+60px)] left-4 right-4 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
     >
-      <motion.div layoutId="artwork" className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
+      <motion.div layoutId="artwork" transition={springConfig} className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
         {song.coverUrl ? (
-          <motion.img layoutId="artwork-image" src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
+          <motion.img layoutId="artwork-image" transition={springConfig} src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
             <Music2 size={20} />
@@ -44,8 +47,8 @@ export function MiniPlayer({
         )}
       </motion.div>
       <div className="flex-1 min-w-0">
-        <motion.h3 layoutId="title" className="font-semibold text-[15px] truncate">{song.title}</motion.h3>
-        <motion.p layoutId="artist" className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</motion.p>
+        <motion.h3 layoutId="title" transition={springConfig} className="font-semibold text-[15px] truncate">{song.title}</motion.h3>
+        <motion.p layoutId="artist" transition={springConfig} className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</motion.p>
       </div>
       <div className="flex items-center gap-2 pr-1">
         <button 

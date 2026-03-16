@@ -27,6 +27,8 @@ interface NowPlayingProps {
   onRepeatToggle: () => void;
 }
 
+const springConfig = { type: "spring", damping: 20, stiffness: 300, mass: 0.8 };
+
 export function NowPlaying({
   song,
   isPlaying,
@@ -107,7 +109,7 @@ export function NowPlaying({
       initial={{ opacity: 0, y: '100%' }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
-      transition={{ type: "spring", damping: 25, stiffness: 200 }}
+      transition={springConfig}
       className="fixed inset-0 bg-[#fcfcfc] dark:bg-black z-50 flex flex-col pt-safe pb-safe"
       drag="y"
       dragConstraints={{ top: 0, bottom: 0 }}
@@ -133,9 +135,9 @@ export function NowPlaying({
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8">
-        <motion.div layoutId="artwork" className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
+        <motion.div layoutId="artwork" transition={springConfig} className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
           {song.coverUrl ? (
-            <motion.img layoutId="artwork-image" src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
+            <motion.img layoutId="artwork-image" transition={springConfig} src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
               <Music2 size={80} strokeWidth={1.5} />
@@ -145,63 +147,85 @@ export function NowPlaying({
 
         <div className="w-full flex items-start justify-between mb-8 relative">
           <div className="flex flex-col items-start flex-1 min-w-0 pr-4">
-            <motion.h2 layoutId="title" className="text-2xl font-bold truncate w-full tracking-tight">{song.title}</motion.h2>
-            <motion.p layoutId="artist" className={`text-lg ${ACCENT_COLORS[accentColor].text} truncate w-full font-medium`}>{song.artist}</motion.p>
+            <motion.h2 layoutId="title" transition={springConfig} className="text-2xl font-bold truncate w-full tracking-tight">{song.title}</motion.h2>
+            <motion.p layoutId="artist" transition={springConfig} className={`text-lg ${ACCENT_COLORS[accentColor].text} truncate w-full font-medium`}>{song.artist}</motion.p>
           </div>
           
-          {isSinkSupported && (
-            <div className="relative">
-              <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <MoreVertical size={24} />
-              </button>
+          <div className="relative">
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <MoreVertical size={24} />
+            </button>
 
-              <AnimatePresence>
-                {isMenuOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setIsMenuOpen(false)}
-                    />
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                      className="absolute bottom-full right-0 mb-2 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden z-50 origin-bottom-right"
-                    >
-                      <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
-                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Playback Device</h3>
-                      </div>
-                      <div className="max-h-60 overflow-y-auto py-2">
-                        {devices.length > 0 ? (
-                          devices.map(device => (
-                            <button
-                              key={device.deviceId}
-                              onClick={() => handleDeviceSelect(device.deviceId)}
-                              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${selectedDeviceId === device.deviceId ? ACCENT_COLORS[accentColor].bgLight + ' ' + ACCENT_COLORS[accentColor].text : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
-                            >
-                              <div className={selectedDeviceId === device.deviceId ? ACCENT_COLORS[accentColor].text : 'text-zinc-400'}>
-                                {getDeviceIcon(device.label || 'Speaker')}
-                              </div>
-                              <span className="text-sm font-medium truncate flex-1">
-                                {device.label || (device.deviceId === 'default' ? 'System Default' : `Device ${device.deviceId.slice(0, 5)}...`)}
-                              </span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 text-sm text-zinc-500 text-center">
-                            No devices found. Try clicking play first or check browser permissions.
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsMenuOpen(false)}
+                  />
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    className="absolute bottom-full right-0 mb-2 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden z-50 origin-bottom-right flex flex-col"
+                  >
+                    <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
+                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Make it Slower</h3>
+                    </div>
+                    <div className="flex flex-col py-2 border-b border-zinc-100 dark:border-zinc-800">
+                      {[1.0, 0.75, 0.5, 0.25].map(s => (
+                        <button
+                          key={s}
+                          onClick={() => {
+                            onSpeedChange(s);
+                            setIsMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${speed === s ? ACCENT_COLORS[accentColor].bgLight + ' ' + ACCENT_COLORS[accentColor].text : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
+                        >
+                          <span className="text-sm font-medium truncate flex-1">
+                            {s === 1.0 ? 'Normal (100%)' : `${s * 100}%`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {isSinkSupported && (
+                      <>
+                        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
+                          <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Playback Device</h3>
+                        </div>
+                        <div className="max-h-40 overflow-y-auto py-2">
+                          {devices.length > 0 ? (
+                            devices.map(device => (
+                              <button
+                                key={device.deviceId}
+                                onClick={() => handleDeviceSelect(device.deviceId)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${selectedDeviceId === device.deviceId ? ACCENT_COLORS[accentColor].bgLight + ' ' + ACCENT_COLORS[accentColor].text : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
+                              >
+                                <div className={selectedDeviceId === device.deviceId ? ACCENT_COLORS[accentColor].text : 'text-zinc-400'}>
+                                  {getDeviceIcon(device.label || 'Speaker')}
+                                </div>
+                                <span className="text-sm font-medium truncate flex-1">
+                                  {device.label || (device.deviceId === 'default' ? 'System Default' : `Device ${device.deviceId.slice(0, 5)}...`)}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-zinc-500 text-center">
+                              No devices found. Try clicking play first or check browser permissions.
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <div className="w-full space-y-2 mb-8">
@@ -256,46 +280,22 @@ export function NowPlaying({
           </button>
         </div>
 
-        <div className="w-full flex flex-col gap-4 px-4">
-          <div className="flex items-center gap-4">
-            <Volume size={18} className="text-zinc-400 dark:text-zinc-500" />
-            <input 
-              type="range" 
-              min="0" 
-              max="1" 
-              step="0.01"
-              value={volume} 
-              onChange={onVolumeChange}
-              className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
-              style={{
-                background: `linear-gradient(to right, var(--tw-gradient-stops))`,
-                backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${volume * 100}%, transparent ${volume * 100}%)`
-              }}
-            />
-            <Volume2 size={18} className="text-zinc-400 dark:text-zinc-500" />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 w-[18px] text-right">
-              {speed.toFixed(1)}x
-            </span>
-            <input 
-              type="range" 
-              min="0.5" 
-              max="2" 
-              step="0.05" 
-              value={speed}
-              onChange={(e) => onSpeedChange(Number(e.target.value))}
-              className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
-              style={{
-                background: `linear-gradient(to right, var(--tw-gradient-stops))`,
-                backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${((speed - 0.5) / 1.5) * 100}%, transparent ${((speed - 0.5) / 1.5) * 100}%)`
-              }}
-            />
-            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 w-[18px]">
-              Spd
-            </span>
-          </div>
+        <div className="w-full flex items-center gap-4 px-4">
+          <Volume size={18} className="text-zinc-400 dark:text-zinc-500" />
+          <input 
+            type="range" 
+            min="0" 
+            max="1" 
+            step="0.01"
+            value={volume} 
+            onChange={onVolumeChange}
+            className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
+            style={{
+              background: `linear-gradient(to right, var(--tw-gradient-stops))`,
+              backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${volume * 100}%, transparent ${volume * 100}%)`
+            }}
+          />
+          <Volume2 size={18} className="text-zinc-400 dark:text-zinc-500" />
         </div>
       </div>
     </motion.div>

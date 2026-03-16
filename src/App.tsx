@@ -78,8 +78,6 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
 
   // Apply theme class
   useEffect(() => {
@@ -308,40 +306,12 @@ export default function App() {
   // Initialize audio element
   useEffect(() => {
     const audio = new Audio();
-    audio.crossOrigin = 'anonymous'; // Important for Web Audio API
     audioRef.current = audio;
-
-    const initAudioContext = async () => {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        audioContextRef.current = ctx;
-
-        const source = ctx.createMediaElementSource(audio);
-        
-        // Load worklet
-        await ctx.audioWorklet.addModule(new URL('./workers/time-stretch.worklet.ts', import.meta.url));
-        
-        const workletNode = new AudioWorkletNode(ctx, 'time-stretch-processor');
-        workletNodeRef.current = workletNode;
-        
-        source.connect(workletNode);
-        workletNode.connect(ctx.destination);
-      } catch (error) {
-        console.error('Failed to initialize Web Audio API:', error);
-      }
-    };
-
-    initAudioContext();
 
     const handleTimeUpdate = () => setProgress(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
     const handleEnded = () => playNext(true);
-    const handlePlay = () => {
-      setIsPlaying(true);
-      if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume();
-      }
-    };
+    const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -358,9 +328,6 @@ export default function App() {
       audio.removeEventListener('pause', handlePause);
       audio.pause();
       audio.src = '';
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
     };
   }, []);
 
@@ -368,14 +335,11 @@ export default function App() {
     if (audioRef.current) {
       audioRef.current.playbackRate = speed;
       // @ts-ignore
-      audioRef.current.preservesPitch = false;
+      audioRef.current.preservesPitch = true;
       // @ts-ignore
-      audioRef.current.mozPreservesPitch = false;
+      audioRef.current.mozPreservesPitch = true;
       // @ts-ignore
-      audioRef.current.webkitPreservesPitch = false;
-    }
-    if (workletNodeRef.current) {
-      workletNodeRef.current.port.postMessage({ type: 'setSpeed', speed });
+      audioRef.current.webkitPreservesPitch = true;
     }
   }, [speed]);
 
@@ -617,9 +581,6 @@ export default function App() {
     const time = Number(e.target.value);
     audioRef.current.currentTime = time;
     setProgress(time);
-    if (workletNodeRef.current) {
-      workletNodeRef.current.port.postMessage({ type: 'seek' });
-    }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
