@@ -43,7 +43,7 @@ export function LibraryTab({
             className={`${ACCENT_COLORS[accentColor].text} font-semibold flex items-center gap-1.5 ${ACCENT_COLORS[accentColor].textHover} transition-colors active:scale-95`}
           >
             <Plus size={20} strokeWidth={2.5} />
-            <span className="hidden sm:inline">Add </span>Files
+            <span className="hidden sm:inline">Add </span>Music
           </button>
           <button 
             onClick={onAddFolder}
