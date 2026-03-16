@@ -110,7 +110,7 @@ export function NowPlaying({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={springConfig}
-      className="fixed inset-0 bg-[#fcfcfc] dark:bg-black z-50 flex flex-col pt-safe pb-safe"
+      className="fixed inset-0 bg-[#fcfcfc] dark:bg-black z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       drag="y"
       dragConstraints={{ top: 0, bottom: 0 }}
       dragElastic={{ top: 0, bottom: 0.7 }}

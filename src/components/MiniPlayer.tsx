@@ -35,7 +35,7 @@ export function MiniPlayer({
       exit={{ opacity: 0, y: 20 }}
       transition={springConfig}
       onClick={onOpen}
-      className="absolute bottom-[calc(env(safe-area-inset-bottom)+60px)] left-4 right-4 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
+      className="absolute bottom-28 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
     >
       <motion.div layoutId="artwork" transition={springConfig} className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
         {song.coverUrl ? (
