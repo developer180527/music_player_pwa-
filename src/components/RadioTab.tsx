@@ -29,10 +29,23 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualUrl.trim()) return;
+    setError(null);
+    
+    const url = manualUrl.trim();
+    if (!url) return;
+
+    try {
+      const parsedUrl = new URL(url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('Invalid protocol');
+      }
+    } catch (err) {
+      setError('Please enter a valid stream URL (e.g., https://stream.example.com/radio)');
+      return;
+    }
 
     const newStation: Song = {
-      url: manualUrl.trim(),
+      url: url,
       title: 'Custom Radio',
       artist: 'Internet Radio',
       album: 'Live Stream',
@@ -53,6 +66,10 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
     try {
       // 1. Get Location
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Geolocation is not supported by your browser.'));
+          return;
+        }
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           timeout: 10000,
           maximumAge: 0,
@@ -63,25 +80,60 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
       const { latitude, longitude } = position.coords;
 
       // 2. Get Country Code
-      const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&email=musicplayer@example.com`);
-      if (!geoRes.ok) throw new Error('Failed to get location data');
-      const geoData = await geoRes.json();
-      const countryCode = geoData.address?.country_code;
+      let countryCode;
+      try {
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&email=musicplayer@example.com`);
+        if (!geoRes.ok) throw new Error(`HTTP error! status: ${geoRes.status}`);
+        const geoData = await geoRes.json();
+        countryCode = geoData.address?.country_code;
+      } catch (err) {
+        throw new Error('Failed to determine your country from location data. Please try again later.');
+      }
 
-      if (!countryCode) throw new Error('Could not determine country');
+      if (!countryCode) throw new Error('Could not determine your country from the location provided.');
 
       // 3. Fetch Stations
-      // Using a random known Radio Browser API server. In production, we should query DNS or the all.api.radio-browser.info
-      const apiServer = 'https://de1.api.radio-browser.info';
-      const stationsRes = await fetch(`${apiServer}/json/stations/bycountrycodeexact/${countryCode}?limit=50&order=votes&reverse=true&hidebroken=true`);
-      
-      if (!stationsRes.ok) throw new Error('Failed to fetch stations');
-      const stationsData: RadioStation[] = await stationsRes.json();
+      let stationsData: RadioStation[];
+      try {
+        // Using a random known Radio Browser API server. In production, we should query DNS or the all.api.radio-browser.info
+        const apiServer = 'https://de1.api.radio-browser.info';
+        const stationsRes = await fetch(`${apiServer}/json/stations/bycountrycodeexact/${countryCode}?limit=50&order=votes&reverse=true&hidebroken=true`);
+        
+        if (!stationsRes.ok) throw new Error(`HTTP error! status: ${stationsRes.status}`);
+        stationsData = await stationsRes.json();
+      } catch (err) {
+        throw new Error('Failed to fetch radio stations from the directory. The service might be temporarily unavailable.');
+      }
+
+      if (stationsData.length === 0) {
+        throw new Error(`No local stations found for your country (${countryCode.toUpperCase()}).`);
+      }
 
       setStations(stationsData);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error finding stations:', err);
-      setError(err instanceof Error ? err.message : 'Failed to find local stations. Please ensure location access is granted.');
+      
+      let errorMessage = 'An unexpected error occurred.';
+      
+      if (err instanceof GeolocationPositionError) {
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            errorMessage = 'Location access was denied. Please enable location permissions in your browser to find local stations.';
+            break;
+          case err.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable. Please try again later.';
+            break;
+          case err.TIMEOUT:
+            errorMessage = 'The request to get your location timed out. Please try again.';
+            break;
+          default:
+            errorMessage = 'An unknown error occurred while trying to get your location.';
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
