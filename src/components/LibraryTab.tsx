@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, FolderOpen, Search, Music2 } from 'lucide-react';
+import { Plus, FolderOpen, Search, Music2, Radio } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Song, AccentColor } from '../types';
 import { ACCENT_COLORS } from '../constants';
@@ -99,12 +99,19 @@ export function LibraryTab({
               >
                 <div className="relative w-14 h-14 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
                   {song.coverUrl ? (
-                    <img src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-                      <Music2 size={24} />
-                    </div>
-                  )}
+                    <img 
+                      src={song.coverUrl} 
+                      alt="cover" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 ${song.coverUrl ? 'hidden' : ''}`}>
+                    {song.isRadio ? <Radio size={24} /> : <Music2 size={24} />}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className={`font-semibold text-[17px] truncate ${isCurrent ? ACCENT_COLORS[accentColor].text : 'text-zinc-900 dark:text-white'}`}>

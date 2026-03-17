@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, Music2 } from 'lucide-react';
+import { Play, Pause, SkipForward, Music2, Radio } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Song, AccentColor } from '../types';
 import { ACCENT_COLORS } from '../constants';
@@ -39,12 +39,21 @@ export function MiniPlayer({
     >
       <motion.div layoutId="artwork" transition={springConfig} className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
         {song.coverUrl ? (
-          <motion.img layoutId="artwork-image" transition={springConfig} src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-            <Music2 size={20} />
-          </div>
-        )}
+          <motion.img 
+            layoutId="artwork-image" 
+            transition={springConfig} 
+            src={song.coverUrl} 
+            alt="cover" 
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={`w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 ${song.coverUrl ? 'hidden' : ''}`}>
+          {song.isRadio ? <Radio size={20} /> : <Music2 size={20} />}
+        </div>
       </motion.div>
       <div className="flex-1 min-w-0">
         <motion.h3 layoutId="title" transition={springConfig} className="font-semibold text-[15px] truncate">{song.title}</motion.h3>
@@ -64,12 +73,14 @@ export function MiniPlayer({
           <SkipForward size={20} className="fill-current" />
         </button>
       </div>
-      <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-        <div 
-          className={`h-full ${ACCENT_COLORS[accentColor].bg} transition-all duration-100 ease-linear`}
-          style={{ width: `${(progress / (duration || 1)) * 100}%` }}
-        />
-      </div>
+      {!song.isRadio && (
+        <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+          <div 
+            className={`h-full ${ACCENT_COLORS[accentColor].bg} transition-all duration-100 ease-linear`}
+            style={{ width: `${(progress / (duration || 1)) * 100}%` }}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

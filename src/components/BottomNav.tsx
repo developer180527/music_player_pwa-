@@ -1,12 +1,12 @@
 import React from 'react';
-import { Library, Search, Settings } from 'lucide-react';
+import { Library, Search, Settings, Radio } from 'lucide-react';
 import { AccentColor } from '../types';
 import { ACCENT_COLORS } from '../constants';
 
 interface BottomNavProps {
-  activeTab: 'library' | 'search' | 'settings';
+  activeTab: 'library' | 'search' | 'radio' | 'settings';
   accentColor: AccentColor;
-  onTabChange: (tab: 'library' | 'search' | 'settings') => void;
+  onTabChange: (tab: 'library' | 'search' | 'radio' | 'settings') => void;
 }
 
 export function BottomNav({ activeTab, accentColor, onTabChange }: BottomNavProps) {
@@ -18,6 +18,13 @@ export function BottomNav({ activeTab, accentColor, onTabChange }: BottomNavProp
       >
         <Library size={24} strokeWidth={activeTab === 'library' ? 2.5 : 2} />
         <span className="text-[10px] font-medium">Library</span>
+      </button>
+      <button 
+        onClick={() => onTabChange('radio')}
+        className={`flex flex-col items-center gap-1 transition-colors active:scale-95 ${activeTab === 'radio' ? ACCENT_COLORS[accentColor].text : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'}`}
+      >
+        <Radio size={24} strokeWidth={activeTab === 'radio' ? 2.5 : 2} />
+        <span className="text-[10px] font-medium">Radio</span>
       </button>
       <button 
         onClick={() => onTabChange('search')}

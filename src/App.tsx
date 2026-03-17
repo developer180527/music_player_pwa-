@@ -18,6 +18,7 @@ import { NowPlaying } from './components/NowPlaying';
 import { LibraryTab } from './components/LibraryTab';
 import { SearchTab } from './components/SearchTab';
 import { SettingsTab } from './components/SettingsTab';
+import { RadioTab } from './components/RadioTab';
 
 export default function App() {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -26,7 +27,7 @@ export default function App() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1.0);
-  const [activeTab, setActiveTab] = useState<'library' | 'search' | 'settings'>('library');
+  const [activeTab, setActiveTab] = useState<'library' | 'search' | 'radio' | 'settings'>('library');
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isShuffle, setIsShuffle] = useState(false);
@@ -348,10 +349,12 @@ export default function App() {
     if (currentSongIndex === null || !audioRef.current || !songs[currentSongIndex]) return;
 
     const song = songs[currentSongIndex];
-    const objectUrl = URL.createObjectURL(song.file);
+    const objectUrl = song.file ? URL.createObjectURL(song.file) : song.url;
     
-    audioRef.current.src = objectUrl;
-    audioRef.current.play().catch(console.error);
+    if (objectUrl) {
+      audioRef.current.src = objectUrl;
+      audioRef.current.play().catch(console.error);
+    }
 
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -370,7 +373,9 @@ export default function App() {
     }
 
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      if (song.file && objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
   }, [currentSongIndex, songs]);
 
@@ -407,12 +412,12 @@ export default function App() {
           if (parsedSongs && parsedSongs.length > 0) {
             const newParsedSongs: Song[] = parsedSongs.map((s: any) => ({
               ...s,
-              coverUrl: s.coverBlob ? URL.createObjectURL(s.coverBlob) : ''
+              coverUrl: s.coverBlob ? URL.createObjectURL(s.coverBlob) : (s.coverUrl || '')
             }));
 
             setSongs(prev => {
-              const existingIds = new Set(prev.map(s => s.file.name + s.file.size));
-              const uniqueNewSongs = newParsedSongs.filter(s => !existingIds.has(s.file.name + s.file.size));
+              const existingIds = new Set(prev.map(s => s.file ? s.file.name + s.file.size : s.url));
+              const uniqueNewSongs = newParsedSongs.filter(s => !existingIds.has(s.file ? s.file.name + s.file.size : s.url));
               const newSongs = [...prev, ...uniqueNewSongs];
               set('library_songs', newSongs).catch(console.error);
               return newSongs;
@@ -495,7 +500,7 @@ export default function App() {
         if (savedSongs && savedSongs.length > 0) {
           const restoredSongs = savedSongs.map(song => ({
             ...song,
-            coverUrl: song.coverBlob ? URL.createObjectURL(song.coverBlob) : ''
+            coverUrl: song.coverBlob ? URL.createObjectURL(song.coverBlob) : (song.coverUrl || '')
           }));
           setSongs(restoredSongs);
         }
@@ -638,6 +643,32 @@ export default function App() {
             accentColor={accentColor}
             onSearchChange={setSearchQuery}
             onSongSelect={setCurrentSongIndex}
+          />
+        )}
+
+        {activeTab === 'radio' && (
+          <RadioTab 
+            accentColor={accentColor}
+            onPlayStation={(station) => {
+              setSongs(prev => {
+                // Check if station already exists
+                const existingIndex = prev.findIndex(s => s.url === station.url);
+                let newSongs;
+                let newIndex = 0;
+                
+                if (existingIndex >= 0) {
+                  newIndex = existingIndex;
+                  newSongs = prev;
+                } else {
+                  newSongs = [station, ...prev];
+                  set('library_songs', newSongs).catch(console.error);
+                }
+                
+                setCurrentSongIndex(newIndex);
+                setIsPlaying(true);
+                return newSongs;
+              });
+            }}
           />
         )}
 

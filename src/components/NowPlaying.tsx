@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Music2, ChevronDown, Shuffle, Repeat, Repeat1, Volume, Volume2, MoreVertical, Speaker, Headphones, Bluetooth } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Music2, Radio, ChevronDown, Shuffle, Repeat, Repeat1, Volume, Volume2, MoreVertical, Speaker, Headphones, Bluetooth } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Song, AccentColor } from '../types';
 import { ACCENT_COLORS } from '../constants';
@@ -137,12 +137,21 @@ export function NowPlaying({
       <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8">
         <motion.div layoutId="artwork" transition={springConfig} className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
           {song.coverUrl ? (
-            <motion.img layoutId="artwork-image" transition={springConfig} src={song.coverUrl} alt="cover" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-              <Music2 size={80} strokeWidth={1.5} />
-            </div>
-          )}
+            <motion.img 
+              layoutId="artwork-image" 
+              transition={springConfig} 
+              src={song.coverUrl} 
+              alt="cover" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <div className={`w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 ${song.coverUrl ? 'hidden' : ''}`}>
+            {song.isRadio ? <Radio size={80} strokeWidth={1.5} /> : <Music2 size={80} strokeWidth={1.5} />}
+          </div>
         </motion.div>
 
         <div className="w-full flex items-start justify-between mb-8 relative">
@@ -228,24 +237,33 @@ export function NowPlaying({
           </div>
         </div>
 
-        <div className="w-full space-y-2 mb-8">
-          <input 
-            type="range" 
-            min="0" 
-            max={duration || 100} 
-            value={progress} 
-            onChange={onSeek}
-            className={`w-full h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none ${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:shadow-md`}
-            style={{
-              background: `linear-gradient(to right, var(--tw-gradient-stops))`,
-              backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${(progress / (duration || 1)) * 100}%, transparent ${(progress / (duration || 1)) * 100}%)`
-            }}
-          />
-          <div className="flex justify-between text-[12px] font-medium text-zinc-500 dark:text-zinc-400 font-mono">
-            <span>{formatTime(progress)}</span>
-            <span>{formatTime(duration)}</span>
+        {song.isRadio ? (
+          <div className="w-full flex items-center justify-center mb-8 h-10">
+            <div className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase ${ACCENT_COLORS[accentColor].bg} text-white flex items-center gap-2 animate-pulse`}>
+              <div className="w-2 h-2 rounded-full bg-white" />
+              Live Stream
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="w-full space-y-2 mb-8">
+            <input 
+              type="range" 
+              min="0" 
+              max={duration || 100} 
+              value={progress} 
+              onChange={onSeek}
+              className={`w-full h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none ${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:shadow-md`}
+              style={{
+                background: `linear-gradient(to right, var(--tw-gradient-stops))`,
+                backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${(progress / (duration || 1)) * 100}%, transparent ${(progress / (duration || 1)) * 100}%)`
+              }}
+            />
+            <div className="flex justify-between text-[12px] font-medium text-zinc-500 dark:text-zinc-400 font-mono">
+              <span>{formatTime(progress)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+        )}
 
         <div className="w-full flex items-center justify-between mb-8">
           <button 
