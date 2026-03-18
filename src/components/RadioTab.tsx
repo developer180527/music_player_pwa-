@@ -154,11 +154,11 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="pb-8"
     >
-      <div className="flex justify-between items-end">
+      <div className="sticky top-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-6 pb-4 mb-8 flex justify-between items-end border-b border-zinc-200/50 dark:border-zinc-800/50">
         <h1 className="text-4xl font-bold tracking-tight">Radio</h1>
         <div className="flex items-center gap-4">
           <button 
@@ -171,6 +171,7 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
         </div>
       </div>
 
+      <div className="px-6 space-y-8">
       {showManualInput && (
         <motion.form 
           initial={{ opacity: 0, height: 0 }}
@@ -257,6 +258,7 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
           ))}
         </div>
       )}
+      </div>
     </motion.div>
   );
 }

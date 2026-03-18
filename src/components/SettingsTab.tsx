@@ -30,12 +30,15 @@ export function SettingsTab({
 }: SettingsTabProps) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="pb-8"
     >
-      <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
+      <div className="sticky top-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-6 pb-4 mb-8 border-b border-zinc-200/50 dark:border-zinc-800/50">
+        <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
+      </div>
       
+      <div className="px-6 space-y-8">
       <div className="space-y-4">
         <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Appearance</h2>
         <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50 divide-y divide-zinc-100 dark:divide-zinc-800/50">
@@ -119,6 +122,7 @@ export function SettingsTab({
             </div>
           ) : null}
         </div>
+      </div>
       </div>
     </motion.div>
   );

@@ -29,12 +29,15 @@ export function SearchTab({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="pb-8"
     >
-      <h1 className="text-4xl font-bold tracking-tight">Search</h1>
-      
+      <div className="sticky top-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-6 pb-4 mb-8 border-b border-zinc-200/50 dark:border-zinc-800/50">
+        <h1 className="text-4xl font-bold tracking-tight">Search</h1>
+      </div>
+
+      <div className="px-6 space-y-8">
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
         <input 
@@ -90,6 +93,7 @@ export function SearchTab({
           )}
         </div>
       )}
+      </div>
     </motion.div>
   );
 }
