@@ -12,8 +12,8 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, accentColor, onTabChange }: BottomNavProps) {
   return (
     <div 
-      className="absolute bottom-0 left-0 w-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-t border-zinc-200/50 dark:border-zinc-800/50 flex justify-around items-center z-40"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) * 0.6 + 12px)', paddingTop: '12px' }}
+      className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 py-3 px-6 flex justify-around items-center z-40 rounded-full shadow-lg"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 12px)' }}
     >
       <button 
         onClick={() => onTabChange('library')}

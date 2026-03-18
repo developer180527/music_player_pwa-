@@ -15,7 +15,7 @@ interface MiniPlayerProps {
   onNext: (e: React.MouseEvent) => void;
 }
 
-const springConfig = { type: "spring", damping: 20, stiffness: 300, mass: 0.8 };
+const springConfig = { type: "spring", damping: 25, stiffness: 300, mass: 1 };
 
 export function MiniPlayer({
   song,
@@ -29,6 +29,7 @@ export function MiniPlayer({
 }: MiniPlayerProps) {
   return (
     <motion.div 
+      layoutId="player-container"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
@@ -43,9 +44,9 @@ export function MiniPlayer({
         }
       }}
       className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.6 + 80px)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 84px)' }}
     >
-      <div className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
+      <motion.div layoutId="artwork" transition={springConfig} className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
         {song.coverUrl ? (
           <img 
             src={song.coverUrl} 
@@ -60,11 +61,11 @@ export function MiniPlayer({
         <div className={`w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 ${song.coverUrl ? 'hidden' : ''}`}>
           {song.isRadio ? <Radio size={20} /> : <Music2 size={20} />}
         </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-[15px] truncate">{song.title}</h3>
-        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</p>
-      </div>
+      </motion.div>
+      <motion.div layoutId="text-container" transition={springConfig} className="flex-1 min-w-0">
+        <motion.h3 layoutId="title" transition={springConfig} className="font-semibold text-[15px] truncate">{song.title}</motion.h3>
+        <motion.p layoutId="artist" transition={springConfig} className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</motion.p>
+      </motion.div>
       <div className="flex items-center gap-2 pr-1">
         <button 
           onClick={onPlayPause}
