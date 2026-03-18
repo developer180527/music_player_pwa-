@@ -29,19 +29,24 @@ export function MiniPlayer({
 }: MiniPlayerProps) {
   return (
     <motion.div 
-      layoutId="player-container"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={springConfig}
       onClick={onOpen}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0.7, bottom: 0 }}
+      onDragEnd={(e, info) => {
+        if (info.offset.y < -50 || info.velocity.y < -500) {
+          onOpen();
+        }
+      }}
       className="absolute bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
     >
-      <motion.div layoutId="artwork" transition={springConfig} className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
+      <div className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
         {song.coverUrl ? (
-          <motion.img 
-            layoutId="artwork-image" 
-            transition={springConfig} 
+          <img 
             src={song.coverUrl} 
             alt="cover" 
             className="w-full h-full object-cover"
@@ -54,10 +59,10 @@ export function MiniPlayer({
         <div className={`w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 ${song.coverUrl ? 'hidden' : ''}`}>
           {song.isRadio ? <Radio size={20} /> : <Music2 size={20} />}
         </div>
-      </motion.div>
+      </div>
       <div className="flex-1 min-w-0">
-        <motion.h3 layoutId="title" transition={springConfig} className="font-semibold text-[15px] truncate">{song.title}</motion.h3>
-        <motion.p layoutId="artist" transition={springConfig} className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</motion.p>
+        <h3 className="font-semibold text-[15px] truncate">{song.title}</h3>
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate">{song.artist}</p>
       </div>
       <div className="flex items-center gap-2 pr-1">
         <button 

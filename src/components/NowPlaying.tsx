@@ -105,7 +105,6 @@ export function NowPlaying({
 
   return (
     <motion.div 
-      layoutId="player-container"
       initial={{ opacity: 0, y: '100%' }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
@@ -135,11 +134,9 @@ export function NowPlaying({
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8">
-        <motion.div layoutId="artwork" transition={springConfig} className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
+        <div className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
           {song.coverUrl ? (
-            <motion.img 
-              layoutId="artwork-image" 
-              transition={springConfig} 
+            <img 
               src={song.coverUrl} 
               alt="cover" 
               className="w-full h-full object-cover"
@@ -152,12 +149,12 @@ export function NowPlaying({
           <div className={`w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 ${song.coverUrl ? 'hidden' : ''}`}>
             {song.isRadio ? <Radio size={80} strokeWidth={1.5} /> : <Music2 size={80} strokeWidth={1.5} />}
           </div>
-        </motion.div>
+        </div>
 
         <div className="w-full flex items-start justify-between mb-8 relative">
           <div className="flex flex-col items-start flex-1 min-w-0 pr-4">
-            <motion.h2 layoutId="title" transition={springConfig} className="text-2xl font-bold truncate w-full tracking-tight">{song.title}</motion.h2>
-            <motion.p layoutId="artist" transition={springConfig} className={`text-lg ${ACCENT_COLORS[accentColor].text} truncate w-full font-medium`}>{song.artist}</motion.p>
+            <h2 className="text-2xl font-bold truncate w-full tracking-tight">{song.title}</h2>
+            <p className={`text-lg ${ACCENT_COLORS[accentColor].text} truncate w-full font-medium`}>{song.artist}</p>
           </div>
           
           <div className="relative">
