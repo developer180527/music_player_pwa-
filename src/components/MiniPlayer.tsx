@@ -44,7 +44,7 @@ export function MiniPlayer({
         }
       }}
       className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 84px)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 76px)' }}
     >
       <motion.div layoutId="artwork" transition={springConfig} className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
         {song.coverUrl ? (

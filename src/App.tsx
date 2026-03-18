@@ -619,7 +619,7 @@ export default function App() {
     <LayoutGroup>
       <div className="flex-1 w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden">
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-64">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-48">
         {activeTab === 'library' && (
           <LibraryTab 
             songs={songs}

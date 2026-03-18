@@ -13,7 +13,7 @@ export function BottomNav({ activeTab, accentColor, onTabChange }: BottomNavProp
   return (
     <div 
       className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-800/50 py-3 px-6 flex justify-around items-center z-40 rounded-full shadow-lg"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 12px)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 4px)' }}
     >
       <button 
         onClick={() => onTabChange('library')}

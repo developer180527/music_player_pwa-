@@ -34,11 +34,11 @@ export function SettingsTab({
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className="sticky top-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-6 pb-4 mb-8 border-b border-zinc-200/50 dark:border-zinc-800/50">
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
         <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
       </div>
       
-      <div className="px-6 space-y-8">
+      <div className="px-6 space-y-8 pt-[calc(env(safe-area-inset-top)+104px)]">
       <div className="space-y-4">
         <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Appearance</h2>
         <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50 divide-y divide-zinc-100 dark:divide-zinc-800/50">

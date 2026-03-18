@@ -33,11 +33,11 @@ export function SearchTab({
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className="sticky top-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-6 pb-4 mb-8 border-b border-zinc-200/50 dark:border-zinc-800/50">
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
         <h1 className="text-4xl font-bold tracking-tight">Search</h1>
       </div>
 
-      <div className="px-6 space-y-8">
+      <div className="px-6 space-y-8 pt-[calc(env(safe-area-inset-top)+104px)]">
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
         <input 
