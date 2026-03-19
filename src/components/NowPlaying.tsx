@@ -27,7 +27,7 @@ interface NowPlayingProps {
   onRepeatToggle: () => void;
 }
 
-const springConfig = { type: "spring", damping: 20, stiffness: 300, mass: 0.8 };
+const springConfig = { type: "spring", damping: 30, stiffness: 300, mass: 1 };
 
 export function NowPlaying({
   song,
@@ -104,47 +104,59 @@ export function NowPlaying({
   };
 
   return (
-    <motion.div 
-      layoutId="player-container"
-      initial={{ opacity: 0, y: '100%' }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: '100%' }}
-      transition={springConfig}
-      className="fixed inset-0 bg-[#fcfcfc]/70 dark:bg-black/70 backdrop-blur-3xl backdrop-saturate-200 z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0, bottom: 0.7 }}
-      onDragEnd={(e, info) => {
-        if (info.offset.y > 100 || info.velocity.y > 500) {
-          onClose();
-        }
-      }}
-    >
-      {song.coverUrl && (
-        <div 
-          className="absolute inset-0 z-[-1] opacity-30 dark:opacity-20 transition-opacity duration-1000 pointer-events-none"
-          style={{
-            backgroundImage: `url(${song.coverUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(80px) saturate(200%)',
-            transform: 'scale(1.2)'
-          }}
-        />
-      )}
-      <div className="flex items-center justify-between px-6 py-4">
-        <button 
-          onClick={onClose}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 transition-transform active:scale-90"
+    <div className="fixed inset-0 z-50 pointer-events-none">
+      <motion.div 
+        layoutId="player-container"
+        initial={{ borderRadius: 32 }}
+        animate={{ borderRadius: 0 }}
+        exit={{ borderRadius: 32 }}
+        transition={springConfig}
+        className="absolute inset-0 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pointer-events-auto bg-[#fcfcfc]/90 dark:bg-black/90 backdrop-blur-3xl backdrop-saturate-200 overflow-hidden"
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.7 }}
+        onDragEnd={(e, info) => {
+          if (info.offset.y > 100 || info.velocity.y > 500) {
+            onClose();
+          }
+        }}
+      >
+        {song.coverUrl && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 z-[-1] pointer-events-none dark:opacity-20"
+            style={{
+              backgroundImage: `url(${song.coverUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(80px) saturate(200%)',
+              transform: 'scale(1.2)'
+            }}
+          />
+        )}
+
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, delay: 0.1 }}
+          className="flex items-center justify-between px-6 py-4"
         >
-          <ChevronDown size={24} />
-        </button>
-        <div className="flex flex-col items-center">
-          <span className="text-[11px] font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">Now Playing</span>
-          <span className="text-[13px] font-medium">{song.album || 'Unknown Album'}</span>
-        </div>
-        <div className="w-10" />
-      </div>
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 transition-transform active:scale-90"
+          >
+            <ChevronDown size={24} />
+          </button>
+          <div className="flex flex-col items-center">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500">Now Playing</span>
+            <span className="text-[13px] font-medium">{song.album || 'Unknown Album'}</span>
+          </div>
+          <div className="w-10" />
+        </motion.div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8">
         <motion.div layoutId="artwork" transition={springConfig} className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-12 relative group">
@@ -170,7 +182,13 @@ export function NowPlaying({
             <motion.p layoutId="artist" transition={springConfig} className={`text-lg ${ACCENT_COLORS[accentColor].text} truncate w-full font-medium`}>{song.artist}</motion.p>
           </motion.div>
           
-          <div className="relative">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+            className="relative"
+          >
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -244,88 +262,97 @@ export function NowPlaying({
                 </>
               )}
             </AnimatePresence>
-          </div>
+          </motion.div>
         </div>
 
-        {song.isRadio ? (
-          <div className="w-full flex items-center justify-center mb-8 h-10">
-            <div className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase ${ACCENT_COLORS[accentColor].bg} text-white flex items-center gap-2 animate-pulse`}>
-              <div className="w-2 h-2 rounded-full bg-white" />
-              Live Stream
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, delay: 0.1 }}
+          className="w-full flex flex-col"
+        >
+          {song.isRadio ? (
+            <div className="w-full flex items-center justify-center mb-8 h-10">
+              <div className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase ${ACCENT_COLORS[accentColor].bg} text-white flex items-center gap-2 animate-pulse`}>
+                <div className="w-2 h-2 rounded-full bg-white" />
+                Live Stream
+              </div>
             </div>
+          ) : (
+            <div className="w-full space-y-2 mb-8">
+              <input 
+                type="range" 
+                min="0" 
+                max={duration || 100} 
+                value={progress} 
+                onChange={onSeek}
+                className={`w-full h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none ${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:shadow-md`}
+                style={{
+                  background: `linear-gradient(to right, var(--tw-gradient-stops))`,
+                  backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${(progress / (duration || 1)) * 100}%, transparent ${(progress / (duration || 1)) * 100}%)`
+                }}
+              />
+              <div className="flex justify-between text-[12px] font-medium text-zinc-500 dark:text-zinc-400 font-mono">
+                <span>{formatTime(progress)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="w-full flex items-center justify-between mb-8">
+            <button 
+              onClick={onShuffleToggle}
+              className={`w-12 h-12 flex items-center justify-center rounded-full transition-transform active:scale-90 ${isShuffle ? ACCENT_COLORS[accentColor].text : 'text-zinc-400 dark:text-zinc-500'}`}
+            >
+              <Shuffle size={20} />
+            </button>
+            <button 
+              onClick={onPrev}
+              className="w-16 h-16 flex items-center justify-center rounded-full text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-transform active:scale-90"
+            >
+              <SkipBack size={32} className="fill-current" />
+            </button>
+            <button 
+              onClick={onPlayPause}
+              className={`w-20 h-20 flex items-center justify-center rounded-full ${ACCENT_COLORS[accentColor].bg} text-white transition-transform active:scale-95 ${ACCENT_COLORS[accentColor].shadow}`}
+            >
+              {isPlaying ? <Pause size={36} className="fill-current" /> : <Play size={36} className="fill-current ml-2" />}
+            </button>
+            <button 
+              onClick={onNext}
+              className="w-16 h-16 flex items-center justify-center rounded-full text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-transform active:scale-90"
+            >
+              <SkipForward size={32} className="fill-current" />
+            </button>
+            <button 
+              onClick={onRepeatToggle}
+              className={`w-12 h-12 flex items-center justify-center rounded-full transition-transform active:scale-90 ${repeatMode !== 'none' ? ACCENT_COLORS[accentColor].text : 'text-zinc-400 dark:text-zinc-500'}`}
+            >
+              {repeatMode === 'one' ? <Repeat1 size={20} /> : <Repeat size={20} />}
+            </button>
           </div>
-        ) : (
-          <div className="w-full space-y-2 mb-8">
+
+          <div className="w-full flex items-center gap-4 px-4">
+            <Volume size={18} className="text-zinc-400 dark:text-zinc-500" />
             <input 
               type="range" 
               min="0" 
-              max={duration || 100} 
-              value={progress} 
-              onChange={onSeek}
-              className={`w-full h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none ${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:${ACCENT_COLORS[accentColor].bg} [&::-webkit-slider-thumb]:shadow-md`}
+              max="1" 
+              step="0.01"
+              value={volume} 
+              onChange={onVolumeChange}
+              className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
               style={{
                 background: `linear-gradient(to right, var(--tw-gradient-stops))`,
-                backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${(progress / (duration || 1)) * 100}%, transparent ${(progress / (duration || 1)) * 100}%)`
+                backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${volume * 100}%, transparent ${volume * 100}%)`
               }}
             />
-            <div className="flex justify-between text-[12px] font-medium text-zinc-500 dark:text-zinc-400 font-mono">
-              <span>{formatTime(progress)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
+            <Volume2 size={18} className="text-zinc-400 dark:text-zinc-500" />
           </div>
-        )}
-
-        <div className="w-full flex items-center justify-between mb-8">
-          <button 
-            onClick={onShuffleToggle}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-transform active:scale-90 ${isShuffle ? ACCENT_COLORS[accentColor].text : 'text-zinc-400 dark:text-zinc-500'}`}
-          >
-            <Shuffle size={20} />
-          </button>
-          <button 
-            onClick={onPrev}
-            className="w-16 h-16 flex items-center justify-center rounded-full text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-transform active:scale-90"
-          >
-            <SkipBack size={32} className="fill-current" />
-          </button>
-          <button 
-            onClick={onPlayPause}
-            className={`w-20 h-20 flex items-center justify-center rounded-full ${ACCENT_COLORS[accentColor].bg} text-white transition-transform active:scale-95 ${ACCENT_COLORS[accentColor].shadow}`}
-          >
-            {isPlaying ? <Pause size={36} className="fill-current" /> : <Play size={36} className="fill-current ml-2" />}
-          </button>
-          <button 
-            onClick={onNext}
-            className="w-16 h-16 flex items-center justify-center rounded-full text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-transform active:scale-90"
-          >
-            <SkipForward size={32} className="fill-current" />
-          </button>
-          <button 
-            onClick={onRepeatToggle}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-transform active:scale-90 ${repeatMode !== 'none' ? ACCENT_COLORS[accentColor].text : 'text-zinc-400 dark:text-zinc-500'}`}
-          >
-            {repeatMode === 'one' ? <Repeat1 size={20} /> : <Repeat size={20} />}
-          </button>
-        </div>
-
-        <div className="w-full flex items-center gap-4 px-4">
-          <Volume size={18} className="text-zinc-400 dark:text-zinc-500" />
-          <input 
-            type="range" 
-            min="0" 
-            max="1" 
-            step="0.01"
-            value={volume} 
-            onChange={onVolumeChange}
-            className={`flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-800 outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm`}
-            style={{
-              background: `linear-gradient(to right, var(--tw-gradient-stops))`,
-              backgroundImage: `linear-gradient(to right, ${accentColor === 'rose' ? '#f43f5e' : accentColor === 'blue' ? '#3b82f6' : accentColor === 'emerald' ? '#10b981' : accentColor === 'violet' ? '#8b5cf6' : '#f59e0b'} ${volume * 100}%, transparent ${volume * 100}%)`
-            }}
-          />
-          <Volume2 size={18} className="text-zinc-400 dark:text-zinc-500" />
-        </div>
+        </motion.div>
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
