@@ -110,7 +110,7 @@ export function NowPlaying({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={springConfig}
-      className="fixed inset-0 bg-[#fcfcfc] dark:bg-black z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-0 bg-[#fcfcfc]/70 dark:bg-black/70 backdrop-blur-3xl backdrop-saturate-200 z-50 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       drag="y"
       dragConstraints={{ top: 0, bottom: 0 }}
       dragElastic={{ top: 0, bottom: 0.7 }}
@@ -120,6 +120,18 @@ export function NowPlaying({
         }
       }}
     >
+      {song.coverUrl && (
+        <div 
+          className="absolute inset-0 z-[-1] opacity-30 dark:opacity-20 transition-opacity duration-1000 pointer-events-none"
+          style={{
+            backgroundImage: `url(${song.coverUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(80px) saturate(200%)',
+            transform: 'scale(1.2)'
+          }}
+        />
+      )}
       <div className="flex items-center justify-between px-6 py-4">
         <button 
           onClick={onClose}
@@ -135,7 +147,7 @@ export function NowPlaying({
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8">
-        <motion.div layoutId="artwork" transition={springConfig} className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-2xl mb-12 relative group">
+        <motion.div layoutId="artwork" transition={springConfig} className="w-full aspect-square max-w-[320px] rounded-3xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-12 relative group">
           {song.coverUrl ? (
             <img 
               src={song.coverUrl} 

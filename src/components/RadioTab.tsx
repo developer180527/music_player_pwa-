@@ -158,8 +158,8 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 flex justify-between items-end border-b border-zinc-200/50 dark:border-zinc-800/50">
-        <h1 className="text-4xl font-bold tracking-tight">Radio</h1>
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-200 border-b border-white/40 dark:border-white/10 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 px-6 flex justify-between items-center">
+        <h1 className="text-3xl font-bold tracking-tight">Radio</h1>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setShowManualInput(!showManualInput)}

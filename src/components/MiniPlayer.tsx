@@ -43,10 +43,15 @@ export function MiniPlayer({
           onOpen();
         }
       }}
-      className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 shadow-lg border border-zinc-200/50 dark:border-zinc-800/50 cursor-pointer z-50 group"
+      className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/70 dark:bg-black/60 backdrop-blur-2xl backdrop-saturate-200 rounded-full p-2 pr-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/40 dark:border-white/10 cursor-pointer z-50 group overflow-hidden"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 76px)' }}
     >
-      <motion.div layoutId="artwork" transition={springConfig} className="relative w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm">
+      <motion.div 
+        layoutId="artwork" 
+        transition={springConfig} 
+        className="relative w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0 shadow-sm border border-black/5 dark:border-white/5 animate-[spin_8s_linear_infinite]"
+        style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
+      >
         {song.coverUrl ? (
           <img 
             src={song.coverUrl} 
@@ -75,13 +80,13 @@ export function MiniPlayer({
         </button>
         <button 
           onClick={onNext}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-transform active:scale-90"
+          className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:white/10 transition-transform active:scale-90"
         >
           <SkipForward size={20} className="fill-current" />
         </button>
       </div>
       {!song.isRadio && (
-        <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+        <div className="absolute bottom-0 left-12 right-12 h-[2px] bg-zinc-200/50 dark:bg-zinc-800/50 rounded-full overflow-hidden">
           <div 
             className={`h-full ${ACCENT_COLORS[accentColor].bg} transition-all duration-100 ease-linear`}
             style={{ width: `${(progress / (duration || 1)) * 100}%` }}

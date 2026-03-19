@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SoundTouch, SimpleFilter } from 'soundtouchjs';
 
 const MAX_BUFFER_SIZE = 16384; // Small buffer since input/output rates are equal

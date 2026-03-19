@@ -35,7 +35,7 @@ export function LibraryTab({
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/80 dark:bg-black/80 backdrop-blur-xl px-6 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 flex justify-between items-end border-b border-zinc-200/50 dark:border-zinc-800/50">
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-2xl backdrop-saturate-200 px-6 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 flex justify-between items-end border-b border-zinc-200/50 dark:border-white/10">
         <h1 className="text-4xl font-bold tracking-tight">Library</h1>
         <div className="flex items-center gap-4">
           <button 
