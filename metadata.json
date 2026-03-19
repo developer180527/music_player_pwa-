@@ -1,5 +1,5 @@
 {
-  "name": "Local Music Player",
-  "description": "A PWA local music player with Apple Music style UI and background playback.",
+  "name": "Aura Music",
+  "description": "A premium music experience with a sleek, modern interface and seamless background playback.",
   "requestFramePermissions": ["geolocation"]
 }

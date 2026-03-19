@@ -257,7 +257,7 @@ export default function App() {
         const credential = await navigator.credentials.create({
           publicKey: {
             challenge,
-            rp: { name: "Music Player", id: window.location.hostname },
+            rp: { name: "Aura Music", id: window.location.hostname },
             user: {
               id: userId,
               name: "user",
