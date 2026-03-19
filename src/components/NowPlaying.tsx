@@ -15,6 +15,8 @@ interface NowPlayingProps {
   isShuffle: boolean;
   repeatMode: 'none' | 'all' | 'one';
   accentColor: AccentColor;
+  isGlassEnabled: boolean;
+  isTintEnabled: boolean;
   audioRef: React.RefObject<HTMLAudioElement>;
   onClose: () => void;
   onPlayPause: () => void;
@@ -39,6 +41,8 @@ export function NowPlaying({
   isShuffle,
   repeatMode,
   accentColor,
+  isGlassEnabled,
+  isTintEnabled,
   audioRef,
   onClose,
   onPlayPause,
@@ -111,7 +115,13 @@ export function NowPlaying({
         animate={{ borderRadius: 0 }}
         exit={{ borderRadius: 32 }}
         transition={springConfig}
-        className="absolute inset-0 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pointer-events-auto bg-[#fcfcfc]/90 dark:bg-black/90 backdrop-blur-3xl backdrop-saturate-200 overflow-hidden"
+        className={`absolute inset-0 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pointer-events-auto overflow-hidden transition-all duration-500 ${
+          isGlassEnabled 
+            ? 'bg-white/20 dark:bg-black/20 backdrop-blur-[40px] backdrop-saturate-[250%] border-t border-white/20 dark:border-white/10' 
+            : isTintEnabled 
+              ? `${ACCENT_COLORS[accentColor].bgLight} border-t border-black/5 dark:border-white/5`
+              : 'bg-[#fcfcfc] dark:bg-black'
+        }`}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={{ top: 0, bottom: 0.7 }}

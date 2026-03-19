@@ -10,10 +10,14 @@ interface SettingsTabProps {
   requireAuth: boolean;
   authSupported: boolean;
   inIframe: boolean;
+  isGlassEnabled: boolean;
+  isTintEnabled: boolean;
   onThemeChange: (theme: 'dark' | 'light') => void;
   onAccentColorChange: (color: AccentColor) => void;
   onKeepScreenOnChange: (keep: boolean) => void;
   onRequireAuthToggle: () => void;
+  onGlassToggle: (enabled: boolean) => void;
+  onTintToggle: (enabled: boolean) => void;
 }
 
 export function SettingsTab({
@@ -23,10 +27,14 @@ export function SettingsTab({
   requireAuth,
   authSupported,
   inIframe,
+  isGlassEnabled,
+  isTintEnabled,
   onThemeChange,
   onAccentColorChange,
   onKeepScreenOnChange,
-  onRequireAuthToggle
+  onRequireAuthToggle,
+  onGlassToggle,
+  onTintToggle
 }: SettingsTabProps) {
   return (
     <motion.div 
@@ -60,15 +68,48 @@ export function SettingsTab({
             <div className="flex items-center gap-3">
               {(Object.keys(ACCENT_COLORS) as AccentColor[]).map((color) => (
                 <button
-                  key={color}
-                  onClick={() => onAccentColorChange(color)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-90 ${ACCENT_COLORS[color].bg} ${accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 ring-zinc-400 dark:ring-zinc-500' : ''}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+                   key={color}
+                   onClick={() => onAccentColorChange(color)}
+                   className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-90 ${ACCENT_COLORS[color].bg} ${accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 ring-zinc-400 dark:ring-zinc-500' : ''}`}
+                 />
+               ))}
+             </div>
+           </div>
+           <div className="flex items-center justify-between p-4 px-5">
+             <div className="flex flex-col">
+               <span className="font-medium text-[17px]">Liquid Glass Effect</span>
+               <span className="text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5">Strong glassmorphism visuals</span>
+             </div>
+             <button 
+               onClick={() => onGlassToggle(!isGlassEnabled)}
+               className={`w-[50px] h-[30px] rounded-full transition-colors relative shadow-inner flex-shrink-0 ml-4 ${isGlassEnabled ? ACCENT_COLORS[accentColor].bg : 'bg-zinc-200 dark:bg-zinc-700'}`}
+             >
+               <motion.div 
+                 className="w-[26px] h-[26px] bg-white rounded-full absolute top-[2px] shadow-sm border border-black/5"
+                 animate={{ left: isGlassEnabled ? '22px' : '2px' }}
+                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
+               />
+             </button>
+           </div>
+           <div className="flex items-center justify-between p-4 px-5">
+             <div className="flex flex-col">
+               <span className={`font-medium text-[17px] ${isGlassEnabled ? 'opacity-50' : ''}`}>Tint Background</span>
+               <span className="text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5">Apply accent color tint (Disabled with Glass)</span>
+             </div>
+             <button 
+               onClick={() => !isGlassEnabled && onTintToggle(!isTintEnabled)}
+               disabled={isGlassEnabled}
+               className={`w-[50px] h-[30px] rounded-full transition-colors relative shadow-inner flex-shrink-0 ml-4 ${isTintEnabled && !isGlassEnabled ? ACCENT_COLORS[accentColor].bg : 'bg-zinc-200 dark:bg-zinc-700'} ${isGlassEnabled ? 'opacity-30 cursor-not-allowed' : ''}`}
+             >
+               <motion.div 
+                 className="w-[26px] h-[26px] bg-white rounded-full absolute top-[2px] shadow-sm border border-black/5"
+                 animate={{ left: isTintEnabled && !isGlassEnabled ? '22px' : '2px' }}
+                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
+               />
+             </button>
+           </div>
+         </div>
+       </div>
 
       <div className="space-y-4 mt-8">
         <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Utility</h2>

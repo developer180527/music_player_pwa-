@@ -10,6 +10,8 @@ interface MiniPlayerProps {
   progress: number;
   duration: number;
   accentColor: AccentColor;
+  isGlassEnabled: boolean;
+  isTintEnabled: boolean;
   onOpen: () => void;
   onPlayPause: (e: React.MouseEvent) => void;
   onNext: (e: React.MouseEvent) => void;
@@ -23,6 +25,8 @@ export function MiniPlayer({
   progress,
   duration,
   accentColor,
+  isGlassEnabled,
+  isTintEnabled,
   onOpen,
   onPlayPause,
   onNext
@@ -43,7 +47,13 @@ export function MiniPlayer({
           onOpen();
         }
       }}
-      className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/70 dark:bg-black/60 backdrop-blur-2xl backdrop-saturate-200 rounded-full p-2 pr-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/40 dark:border-white/10 cursor-pointer z-50 group overflow-hidden"
+      className={`fixed left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm rounded-full p-2 pr-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border cursor-pointer z-50 group overflow-hidden transition-all duration-500 ${
+        isGlassEnabled 
+          ? 'bg-white/20 dark:bg-black/20 backdrop-blur-[40px] backdrop-saturate-[250%] border-white/30 dark:border-white/10' 
+          : isTintEnabled 
+            ? `${ACCENT_COLORS[accentColor].bgLight} border-zinc-200 dark:border-zinc-800`
+            : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
+      }`}
       style={{ 
         bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 76px)',
         borderRadius: 9999

@@ -49,6 +49,19 @@ export default function App() {
     }
     return false;
   });
+  const [isGlassEnabled, setIsGlassEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('isGlassEnabled');
+      return saved === null ? true : saved === 'true';
+    }
+    return true;
+  });
+  const [isTintEnabled, setIsTintEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('isTintEnabled') === 'true';
+    }
+    return false;
+  });
 
   const isShuffleRef = useRef(isShuffle);
   const repeatModeRef = useRef(repeatMode);
@@ -680,6 +693,8 @@ export default function App() {
             requireAuth={requireAuth}
             authSupported={authSupported}
             inIframe={inIframe}
+            isGlassEnabled={isGlassEnabled}
+            isTintEnabled={isTintEnabled}
             onThemeChange={setTheme}
             onAccentColorChange={(color) => {
               setAccentColor(color);
@@ -690,6 +705,14 @@ export default function App() {
               localStorage.setItem('keepScreenOn', String(keep));
             }}
             onRequireAuthToggle={toggleAuth}
+            onGlassToggle={(enabled) => {
+              setIsGlassEnabled(enabled);
+              localStorage.setItem('isGlassEnabled', String(enabled));
+            }}
+            onTintToggle={(enabled) => {
+              setIsTintEnabled(enabled);
+              localStorage.setItem('isTintEnabled', String(enabled));
+            }}
           />
         )}
       </div>
@@ -703,6 +726,8 @@ export default function App() {
             progress={progress}
             duration={duration}
             accentColor={accentColor}
+            isGlassEnabled={isGlassEnabled}
+            isTintEnabled={isTintEnabled}
             onOpen={() => setIsNowPlayingOpen(true)}
             onPlayPause={togglePlayPause}
             onNext={handleNextClick}
@@ -731,6 +756,8 @@ export default function App() {
             repeatMode={repeatMode}
             accentColor={accentColor}
             audioRef={audioRef}
+            isGlassEnabled={isGlassEnabled}
+            isTintEnabled={isTintEnabled}
             onClose={() => setIsNowPlayingOpen(false)}
             onPlayPause={togglePlayPause}
             onNext={handleNextClick}
