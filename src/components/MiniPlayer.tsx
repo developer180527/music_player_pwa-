@@ -12,6 +12,7 @@ interface MiniPlayerProps {
   accentColor: AccentColor;
   isGlassEnabled: boolean;
   isTintEnabled: boolean;
+  isIpodMode: boolean;
   onOpen: () => void;
   onPlayPause: (e: React.MouseEvent) => void;
   onNext: (e: React.MouseEvent) => void;
@@ -27,6 +28,7 @@ export function MiniPlayer({
   accentColor,
   isGlassEnabled,
   isTintEnabled,
+  isIpodMode,
   onOpen,
   onPlayPause,
   onNext
@@ -47,7 +49,7 @@ export function MiniPlayer({
           onOpen();
         }
       }}
-      className={`fixed left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm rounded-full p-2 pr-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border cursor-pointer z-50 group overflow-hidden transition-all duration-500 ${
+      className={`absolute left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm rounded-full p-2 pr-4 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.12)] border cursor-pointer z-50 group overflow-hidden transition-all duration-500 ${
         isGlassEnabled 
           ? 'bg-white/20 dark:bg-black/20 backdrop-blur-[40px] backdrop-saturate-[250%] border-white/30 dark:border-white/10' 
           : isTintEnabled 
@@ -55,7 +57,7 @@ export function MiniPlayer({
             : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
       }`}
       style={{ 
-        bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 76px)',
+        bottom: isIpodMode ? '16px' : 'calc(env(safe-area-inset-bottom) * 0.5 + 76px)',
         borderRadius: 9999
       }}
     >

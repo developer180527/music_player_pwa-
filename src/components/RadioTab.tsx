@@ -7,6 +7,7 @@ import { ACCENT_COLORS } from '../constants';
 interface RadioTabProps {
   accentColor: AccentColor;
   onPlayStation: (station: Song) => void;
+  isIpodMode?: boolean;
 }
 
 interface RadioStation {
@@ -20,7 +21,7 @@ interface RadioStation {
   votes: number;
 }
 
-export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
+export function RadioTab({ accentColor, onPlayStation, isIpodMode }: RadioTabProps) {
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +159,7 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-200 border-b border-white/40 dark:border-white/10 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 px-6 flex justify-between items-center">
+      <div className={`sticky top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-200 border-b border-white/40 dark:border-white/10 ${isIpodMode ? 'pt-4' : 'pt-[calc(env(safe-area-inset-top)+16px)]'} pb-4 px-6 flex justify-between items-center -mx-6 mb-8`}>
         <h1 className="text-3xl font-bold tracking-tight">Radio</h1>
         <div className="flex items-center gap-4">
           <button 
@@ -171,7 +172,7 @@ export function RadioTab({ accentColor, onPlayStation }: RadioTabProps) {
         </div>
       </div>
 
-      <div className="px-6 space-y-8 pt-[calc(env(safe-area-inset-top)+104px)]">
+      <div className="px-6 space-y-8">
       {showManualInput && (
         <motion.form 
           initial={{ opacity: 0, height: 0 }}

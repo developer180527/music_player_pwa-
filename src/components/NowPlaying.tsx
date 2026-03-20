@@ -17,6 +17,7 @@ interface NowPlayingProps {
   accentColor: AccentColor;
   isGlassEnabled: boolean;
   isTintEnabled: boolean;
+  isIpodMode: boolean;
   audioRef: React.RefObject<HTMLAudioElement>;
   onClose: () => void;
   onPlayPause: () => void;
@@ -43,6 +44,7 @@ export function NowPlaying({
   accentColor,
   isGlassEnabled,
   isTintEnabled,
+  isIpodMode,
   audioRef,
   onClose,
   onPlayPause,
@@ -108,14 +110,14 @@ export function NowPlaying({
   };
 
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none">
+    <div className="absolute inset-0 z-50 pointer-events-none">
       <motion.div 
         layoutId="player-container"
         initial={{ borderRadius: 32 }}
         animate={{ borderRadius: 0 }}
         exit={{ borderRadius: 32 }}
         transition={springConfig}
-        className={`absolute inset-0 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pointer-events-auto overflow-hidden transition-all duration-500 ${
+        className={`absolute inset-0 flex flex-col ${isIpodMode ? 'pt-4 pb-4' : 'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]'} pointer-events-auto overflow-hidden transition-all duration-500 ${
           isGlassEnabled 
             ? 'bg-white/20 dark:bg-black/20 backdrop-blur-[40px] backdrop-saturate-[250%] border-t border-white/20 dark:border-white/10' 
             : isTintEnabled 
@@ -210,7 +212,7 @@ export function NowPlaying({
               {isMenuOpen && (
                 <>
                   <div 
-                    className="fixed inset-0 z-40" 
+                    className="absolute inset-0 z-40" 
                     onClick={() => setIsMenuOpen(false)}
                   />
                   <motion.div 

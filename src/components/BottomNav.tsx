@@ -12,7 +12,7 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, accentColor, onTabChange }: BottomNavProps) {
   return (
     <div 
-      className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/70 dark:bg-black/60 backdrop-blur-2xl backdrop-saturate-200 border border-white/40 dark:border-white/10 py-3 px-6 flex justify-around items-center z-40 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+      className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-sm bg-white/70 dark:bg-black/60 backdrop-blur-2xl backdrop-saturate-200 border border-white/40 dark:border-white/10 py-3 px-6 flex justify-around items-center z-40 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) * 0.5 + 4px)' }}
     >
       <button 

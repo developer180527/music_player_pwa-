@@ -12,12 +12,14 @@ interface SettingsTabProps {
   inIframe: boolean;
   isGlassEnabled: boolean;
   isTintEnabled: boolean;
+  isIpodMode: boolean;
   onThemeChange: (theme: 'dark' | 'light') => void;
   onAccentColorChange: (color: AccentColor) => void;
   onKeepScreenOnChange: (keep: boolean) => void;
   onRequireAuthToggle: () => void;
   onGlassToggle: (enabled: boolean) => void;
   onTintToggle: (enabled: boolean) => void;
+  onIpodModeToggle: (enabled: boolean) => void;
 }
 
 export function SettingsTab({
@@ -29,12 +31,14 @@ export function SettingsTab({
   inIframe,
   isGlassEnabled,
   isTintEnabled,
+  isIpodMode,
   onThemeChange,
   onAccentColorChange,
   onKeepScreenOnChange,
   onRequireAuthToggle,
   onGlassToggle,
-  onTintToggle
+  onTintToggle,
+  onIpodModeToggle
 }: SettingsTabProps) {
   return (
     <motion.div 
@@ -42,11 +46,11 @@ export function SettingsTab({
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className="fixed top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-200 border-b border-white/40 dark:border-white/10 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 px-6">
+      <div className={`sticky top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-200 border-b border-white/40 dark:border-white/10 ${isIpodMode ? 'pt-4' : 'pt-[calc(env(safe-area-inset-top)+16px)]'} pb-4 px-6 -mx-6 mb-8`}>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
       </div>
       
-      <div className="px-6 space-y-8 pt-[calc(env(safe-area-inset-top)+104px)]">
+      <div className="px-6 space-y-8">
       <div className="space-y-4">
         <h2 className="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-4">Appearance</h2>
         <div className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50 divide-y divide-zinc-100 dark:divide-zinc-800/50">
@@ -74,6 +78,22 @@ export function SettingsTab({
                  />
                ))}
              </div>
+           </div>
+           <div className="flex items-center justify-between p-4 px-5">
+             <div className="flex flex-col">
+               <span className="font-medium text-[17px]">iPod Classic Mode</span>
+               <span className="text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5">Transform UI into a classic player</span>
+             </div>
+             <button 
+               onClick={() => onIpodModeToggle(!isIpodMode)}
+               className={`w-[50px] h-[30px] rounded-full transition-colors relative shadow-inner flex-shrink-0 ml-4 ${isIpodMode ? ACCENT_COLORS[accentColor].bg : 'bg-zinc-200 dark:bg-zinc-700'}`}
+             >
+               <motion.div 
+                 className="w-[26px] h-[26px] bg-white rounded-full absolute top-[2px] shadow-sm border border-black/5"
+                 animate={{ left: isIpodMode ? '22px' : '2px' }}
+                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
+               />
+             </button>
            </div>
            <div className="flex items-center justify-between p-4 px-5">
              <div className="flex flex-col">

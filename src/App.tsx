@@ -19,6 +19,7 @@ import { LibraryTab } from './components/LibraryTab';
 import { SearchTab } from './components/SearchTab';
 import { SettingsTab } from './components/SettingsTab';
 import { RadioTab } from './components/RadioTab';
+import { ClickWheel } from './components/ClickWheel';
 
 export default function App() {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -59,6 +60,12 @@ export default function App() {
   const [isTintEnabled, setIsTintEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('isTintEnabled') === 'true';
+    }
+    return false;
+  });
+  const [isIpodMode, setIsIpodMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('isIpodMode') === 'true';
     }
     return false;
   });
@@ -628,11 +635,13 @@ export default function App() {
     );
   }
 
-  return (
-    <LayoutGroup>
-      <div className="flex-1 w-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden">
+  const appContent = (
+    <div 
+      className="flex-1 w-full h-full bg-[#fcfcfc] dark:bg-black text-zinc-900 dark:text-white flex flex-col relative overflow-hidden rounded-inherit"
+      style={{ transform: 'translateZ(0)' }}
+    >
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-48">
+      <div id="main-scroll-container" className={`flex-1 overflow-y-auto no-scrollbar ${isIpodMode ? 'pb-24' : 'pb-48'} relative`}>
         {activeTab === 'library' && (
           <LibraryTab 
             songs={songs}
@@ -645,6 +654,7 @@ export default function App() {
             onAddFiles={() => fileInputRef.current?.click()}
             onAddFolder={handleDirectorySelect}
             onFileSelect={handleFileSelect}
+            isIpodMode={isIpodMode}
           />
         )}
 
@@ -656,12 +666,14 @@ export default function App() {
             accentColor={accentColor}
             onSearchChange={setSearchQuery}
             onSongSelect={setCurrentSongIndex}
+            isIpodMode={isIpodMode}
           />
         )}
 
         {activeTab === 'radio' && (
           <RadioTab 
             accentColor={accentColor}
+            isIpodMode={isIpodMode}
             onPlayStation={(station) => {
               setSongs(prev => {
                 // Check if station already exists
@@ -695,6 +707,7 @@ export default function App() {
             inIframe={inIframe}
             isGlassEnabled={isGlassEnabled}
             isTintEnabled={isTintEnabled}
+            isIpodMode={isIpodMode}
             onThemeChange={setTheme}
             onAccentColorChange={(color) => {
               setAccentColor(color);
@@ -713,6 +726,10 @@ export default function App() {
               setIsTintEnabled(enabled);
               localStorage.setItem('isTintEnabled', String(enabled));
             }}
+            onIpodModeToggle={(enabled) => {
+              setIsIpodMode(enabled);
+              localStorage.setItem('isIpodMode', String(enabled));
+            }}
           />
         )}
       </div>
@@ -728,6 +745,7 @@ export default function App() {
             accentColor={accentColor}
             isGlassEnabled={isGlassEnabled}
             isTintEnabled={isTintEnabled}
+            isIpodMode={isIpodMode}
             onOpen={() => setIsNowPlayingOpen(true)}
             onPlayPause={togglePlayPause}
             onNext={handleNextClick}
@@ -736,11 +754,13 @@ export default function App() {
       </AnimatePresence>
 
       {/* Bottom Navigation */}
-      <BottomNav 
-        activeTab={activeTab}
-        accentColor={accentColor}
-        onTabChange={setActiveTab}
-      />
+      {!isIpodMode && (
+        <BottomNav 
+          activeTab={activeTab}
+          accentColor={accentColor}
+          onTabChange={setActiveTab}
+        />
+      )}
 
       {/* Full Screen Player */}
       <AnimatePresence>
@@ -758,6 +778,7 @@ export default function App() {
             audioRef={audioRef}
             isGlassEnabled={isGlassEnabled}
             isTintEnabled={isTintEnabled}
+            isIpodMode={isIpodMode}
             onClose={() => setIsNowPlayingOpen(false)}
             onPlayPause={togglePlayPause}
             onNext={handleNextClick}
@@ -771,6 +792,50 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+  );
+
+  if (isIpodMode) {
+    return (
+      <LayoutGroup>
+        <div className="fixed inset-0 bg-zinc-900 flex items-center justify-center p-4 sm:p-8">
+          <div className="w-full max-w-[360px] aspect-[1/2] min-h-[600px] max-h-[800px] bg-gradient-to-b from-[#e0e0e0] to-[#b0b0b0] dark:from-zinc-800 dark:to-zinc-900 rounded-[2.5rem] p-5 shadow-[inset_-2px_-2px_10px_rgba(255,255,255,0.5),5px_15px_25px_rgba(0,0,0,0.5)] border border-zinc-300 dark:border-zinc-700 flex flex-col gap-8 relative">
+            {/* Screen */}
+            <div className="w-full aspect-[4/3] bg-black rounded-xl p-1 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] overflow-hidden relative border-4 border-zinc-800">
+              <div className="w-full h-full bg-white dark:bg-black overflow-hidden rounded-lg relative">
+                {appContent}
+              </div>
+            </div>
+            {/* Wheel */}
+            <div className="flex-1 flex items-center justify-center pb-4">
+              <ClickWheel
+                onScroll={(dir) => {
+                  const el = document.getElementById('main-scroll-container');
+                  if (el) el.scrollTop += dir * 40;
+                }}
+                onMenu={() => {
+                  const tabs: ('library' | 'search' | 'radio' | 'settings')[] = ['library', 'search', 'radio', 'settings'];
+                  const idx = tabs.indexOf(activeTab);
+                  setActiveTab(tabs[(idx + 1) % tabs.length]);
+                }}
+                onPlayPause={togglePlayPause}
+                onNext={() => playNext(false)}
+                onPrev={playPrev}
+                onCenter={() => {
+                  togglePlayPause();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </LayoutGroup>
+    );
+  }
+
+  return (
+    <LayoutGroup>
+      <div className="fixed inset-0 flex flex-col">
+        {appContent}
+      </div>
     </LayoutGroup>
   );
 }
