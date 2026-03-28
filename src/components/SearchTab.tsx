@@ -11,7 +11,6 @@ interface SearchTabProps {
   accentColor: AccentColor;
   onSearchChange: (query: string) => void;
   onSongSelect: (index: number) => void;
-  isIpodMode?: boolean;
 }
 
 export function SearchTab({
@@ -20,8 +19,7 @@ export function SearchTab({
   currentSongIndex,
   accentColor,
   onSearchChange,
-  onSongSelect,
-  isIpodMode
+  onSongSelect
 }: SearchTabProps) {
   const filteredSongs = songs.filter(song => 
     song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,7 +33,7 @@ export function SearchTab({
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className={`sticky top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-200 border-b border-white/40 dark:border-white/10 ${isIpodMode ? 'pt-4' : 'pt-[calc(env(safe-area-inset-top)+16px)]'} pb-4 px-6 -mx-6 mb-8`}>
+      <div className="sticky top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-200 border-b border-white/40 dark:border-white/10 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 px-6 -mx-6 mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Search</h1>
       </div>
 

@@ -15,7 +15,6 @@ interface LibraryTabProps {
   onAddFiles: () => void;
   onAddFolder: () => void;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  isIpodMode?: boolean;
 }
 
 export function LibraryTab({
@@ -28,8 +27,7 @@ export function LibraryTab({
   onSongSelect,
   onAddFiles,
   onAddFolder,
-  onFileSelect,
-  isIpodMode
+  onFileSelect
 }: LibraryTabProps) {
   return (
     <motion.div 
@@ -37,7 +35,7 @@ export function LibraryTab({
       animate={{ opacity: 1 }}
       className="pb-8"
     >
-      <div className={`sticky top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-2xl backdrop-saturate-200 px-6 ${isIpodMode ? 'pt-4' : 'pt-[calc(env(safe-area-inset-top)+24px)]'} pb-4 flex justify-between items-end border-b border-zinc-200/50 dark:border-white/10 -mx-6 mb-8`}>
+      <div className="sticky top-0 left-0 right-0 z-30 bg-[#fcfcfc]/70 dark:bg-black/60 backdrop-blur-2xl backdrop-saturate-200 px-6 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 flex justify-between items-end border-b border-zinc-200/50 dark:border-white/10 -mx-6 mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Library</h1>
         <div className="flex items-center gap-4">
           <button 
