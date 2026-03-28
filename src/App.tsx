@@ -636,7 +636,7 @@ export default function App() {
           style={{ transform: 'translateZ(0)' }}
         >
           {/* Main Content Area */}
-          <div id="main-scroll-container" className="flex-1 overflow-y-auto overscroll-contain no-scrollbar pb-48 relative">
+          <div id="main-scroll-container" className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain no-scrollbar pb-48 relative w-full">
             {activeTab === 'library' && (
               <LibraryTab 
                 songs={songs}
