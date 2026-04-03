@@ -150,6 +150,40 @@ export default function App() {
     };
   }, [keepScreenOn, isPlaying]);
 
+  // Prevent visual viewport scrolling when keyboard appears on iOS
+  // and adjust root height to match visual viewport
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0 || window.scrollX > 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const root = document.getElementById('root');
+        if (root) {
+          root.style.height = `${window.visualViewport.height}px`;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: false });
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      // Initial set
+      handleResize();
+    }
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
+  }, []);
+
   // Check if WebAuthn is supported
   useEffect(() => {
     try {
